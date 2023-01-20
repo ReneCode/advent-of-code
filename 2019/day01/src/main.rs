@@ -2,6 +2,22 @@
 // https://levelup.gitconnected.com/easiest-way-to-understand-rust-modules-across-multiple-files-234b5018cbfd
 mod util;
 
+#[cfg(test)]
+#[test]
+fn test_calc_required() {
+    assert_eq!(calc_required(12), 2);
+    assert_eq!(calc_required(14), 2);
+    assert_eq!(calc_required(1969), 654);
+    assert_eq!(calc_required(100756), 33583);
+}
+
+#[test]
+fn test_calc_required_part_2() {
+    assert_eq!(calc_required_part_2(14), 2);
+    assert_eq!(calc_required_part_2(1969), 966);
+    assert_eq!(calc_required_part_2(100756), 50346);
+}
+
 fn main() {
     println!("Hello, day01");
     part_1();
@@ -26,12 +42,12 @@ fn part_1() {
     println!("part-1 total fuel value {}", total_fuel_value);
 }
 
-fn parse_f32_or_0(str: &str) -> f32 {
-    match str.parse::<f32>() {
-        Ok(m) => m,
-        Err(_) => 0.0,
-    }
-}
+// fn parse_f32_or_0(str: &str) -> f32 {
+//     match str.parse::<f32>() {
+//         Ok(m) => m,
+//         Err(_) => 0.0,
+//     }
+// }
 
 fn parse_i32_or_0(str: &str) -> i32 {
     match str.parse::<i32>() {
