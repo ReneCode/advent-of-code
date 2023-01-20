@@ -3,20 +3,52 @@
 mod util;
 
 #[cfg(test)]
-#[test]
-fn test_calc_required() {
-    assert_eq!(calc_required(12), 2);
-    assert_eq!(calc_required(14), 2);
-    assert_eq!(calc_required(1969), 654);
-    assert_eq!(calc_required(100756), 33583);
+use rstest::rstest;
+
+#[cfg(test)]
+#[rstest]
+#[case(12, 2)]
+#[case(14, 2)]
+#[case(1969, 654)]
+#[case(100756, 33583)]
+pub fn test_calc_required(#[case] input: i32, #[case] expected: i32) {
+    assert_eq!(expected, calc_required(input));
 }
 
-#[test]
-fn test_calc_required_part_2() {
-    assert_eq!(calc_required_part_2(14), 2);
-    assert_eq!(calc_required_part_2(1969), 966);
-    assert_eq!(calc_required_part_2(100756), 50346);
+#[cfg(test)]
+#[rstest]
+#[case(12, 2)]
+#[case(14, 2)]
+#[case(1969, 966)]
+#[case(100756, 50346)]
+pub fn test_calc_required_part_2(#[case] input: i32, #[case] expected: i32) {
+    assert_eq!(expected, calc_required_part_2(input));
 }
+
+// use rstest::rstest;
+
+// #[rstest]
+// #[case(12, 2)]
+// #[case(14, 2)]
+// pub fn test_table(#[case] input: i32, #[case] expected: i32) {
+//     assert_eq!(expected, calc_required(input));
+// }
+
+// #[cfg(test)]
+// #[test]
+// fn test_calc_required() {
+//     assert_eq!(calc_required(12), 2);
+//     assert_eq!(calc_required(14), 2);
+//     assert_eq!(calc_required(1969), 654);
+//     assert_eq!(calc_required(100756), 33583);
+// }
+
+// #[test]
+// fn test_calc_required_part_2() {
+//     assert_eq!(calc_required_part_2(14), 2);
+//     assert_eq!(calc_required_part_2(1969), 966);
+//     assert_eq!(calc_required_part_2(100756), 50346);
+// }
 
 fn main() {
     println!("Hello, day01");
@@ -69,7 +101,7 @@ fn part_2() {
     }
 }
 
-fn calc_required(mass: i32) -> i32 {
+pub fn calc_required(mass: i32) -> i32 {
     let fuel_value = (mass as f32 / 3.0).floor() - 2.0;
     fuel_value as i32
 }
