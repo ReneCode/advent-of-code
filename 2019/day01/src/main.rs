@@ -10,10 +10,10 @@ fn main() {
     if let Some(lines) = util::get_lines("./01.data") {
         for line in lines {
             match line.parse::<f32>() {
-                Ok(val) => {
-                    let fuel_value = ((val / 3.0) - 0.5).round() - 2.0;
+                Ok(mass) => {
+                    let fuel_value = (mass / 3.0).floor() - 2.0;
                     total_fuel_value = total_fuel_value + fuel_value;
-                    println!("{} / {}", val, fuel_value);
+                    println!("{} / {}", mass, fuel_value);
                 }
                 Err(_) => {}
             }
