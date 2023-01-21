@@ -1,6 +1,6 @@
 // using modules
 // https://levelup.gitconnected.com/easiest-way-to-understand-rust-modules-across-multiple-files-234b5018cbfd
-mod util;
+extern crate util;
 
 #[cfg(test)]
 use rstest::rstest;
@@ -59,7 +59,7 @@ fn main() {
 fn part_1() {
     let mut total_fuel_value: i32 = 0;
 
-    if let Some(lines) = util::get_lines("./01.data") {
+    if let Some(lines) = util::io::get_lines("./01.data") {
         for line in lines {
             match line.parse::<i32>() {
                 Ok(mass) => {
@@ -89,7 +89,7 @@ fn parse_i32_or_0(str: &str) -> i32 {
 }
 
 fn part_2() {
-    if let Some(lines) = util::get_lines("./01.data") {
+    if let Some(lines) = util::io::get_lines("./01.data") {
         let total = lines
             .iter()
             .map(|line| parse_i32_or_0(line))

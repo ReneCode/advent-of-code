@@ -19,3 +19,7 @@ pub fn get_lines(filename: &str) -> Option<Vec<String>> {
     }
     Some(result)
 }
+
+pub fn hello() {
+    println!("hello from util lib");
+}
