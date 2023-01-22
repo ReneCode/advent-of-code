@@ -5,15 +5,38 @@ const CODE_ADD: usize = 1;
 const CODE_MULTIPLY: usize = 2;
 
 fn main() {
+    let x = 10;
+    let a: i32 = (1..=x).sum();
+    println!("{:?}", a);
+
     println!("Hello, day02!");
     if let Some(input) = util::io::get_lines("./02.data") {
         if let Some(line) = input.get(0) {
-            println!("part-1 result: {}", work_programm(line));
+            part_1(line);
+            part_2(line);
         }
     }
 }
 
-fn work_programm(line: &String) -> usize {
+fn part_1(line: &String) {
+    println!("part-1 result: {}", work_programm(line, 12, 2));
+}
+
+fn part_2(line: &String) {
+    let expect_resut = 19690720;
+    for noun in 0..=99 {
+        for verb in 0..=99 {
+            let result = work_programm(line, noun, verb);
+            if result == expect_resut {
+                let answer = 100 * noun + verb;
+                println!("part-2 answer: {} ({}, {})", answer, noun, verb);
+                return;
+            }
+        }
+    }
+}
+
+fn work_programm(line: &String, noun: usize, verb: usize) -> usize {
     let mut program: Vec<usize> = line
         .split(",")
         .map(|s| {
@@ -26,8 +49,8 @@ fn work_programm(line: &String) -> usize {
         .collect();
 
     // restore the gravity
-    program[1] = 12;
-    program[2] = 2;
+    program[1] = noun;
+    program[2] = verb;
 
     let mut idx: usize = 0;
     loop {
