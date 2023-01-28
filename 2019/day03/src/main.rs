@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 extern crate util;
 
 struct BoundingBox {
@@ -80,6 +82,36 @@ impl Line {
         }
         None
     }
+
+    fn is_on_line(&self, point: &Point) -> bool {
+        if self.is_horizontal() {
+            return point.y == self.p1.y && between(point.x, self.p1.x, self.p2.x);
+        }
+        if self.is_vertical() {
+            return point.x == self.p1.x && between(point.y, self.p1.y, self.p2.y);
+        }
+        return false;
+    }
+
+    fn steps(&self) -> i32 {
+        if self.is_horizontal() {
+            return (self.p1.x - self.p2.x).abs();
+        }
+        if self.is_vertical() {
+            return (self.p1.y - self.p2.y).abs();
+        }
+        panic!("can't calc steps");
+    }
+
+    fn steps_to_reach(&self, point: &Point) -> i32 {
+        if self.is_horizontal() {
+            return (point.x - self.p1.x).abs();
+        }
+        if self.is_vertical() {
+            return (point.y - self.p1.y).abs();
+        }
+        panic!("can't calc steps_to_reach");
+    }
 }
 
 struct Board {
@@ -155,18 +187,24 @@ fn main() {
     println!("Hello, day03!");
     if let Some(board) = get_data("./03.data") {
         part_1(&board);
+        part_2(&board);
     }
 }
 
-fn part_1(board: &Board) {
+fn get_intersections(lines_a: &Vec<Line>, lines_b: &Vec<Line>) -> Vec<Point> {
     let mut intersections = Vec::new();
-    for first_line in board.first_lines.iter() {
-        for second_line in board.second_lines.iter() {
+    for first_line in lines_a.iter() {
+        for second_line in lines_b.iter() {
             if let Some(intersect) = first_line.intersect(&second_line) {
                 intersections.push(intersect)
             }
         }
     }
+    intersections
+}
+
+fn part_1(board: &Board) {
+    let intersections = get_intersections(&board.first_lines, &board.second_lines);
 
     let mut distances: Vec<i32> = intersections
         .iter()
@@ -175,4 +213,33 @@ fn part_1(board: &Board) {
     distances.sort();
 
     println!("part1 min distance {}", distances[0]);
+}
+
+fn count_steps_to_point(lines: &Vec<Line>, point: &Point) -> i32 {
+    let mut steps = 0;
+    for line in lines {
+        if !line.is_on_line(point) {
+            steps += line.steps();
+        } else {
+            steps += line.steps_to_reach(point);
+
+            break;
+        }
+    }
+    steps
+}
+
+fn part_2(board: &Board) {
+    let intersections = get_intersections(&board.first_lines, &board.second_lines);
+
+    let mut steps: Vec<i32> = intersections
+        .iter()
+        .map(|point| {
+            count_steps_to_point(&board.first_lines, point)
+                + count_steps_to_point(&board.second_lines, point)
+        })
+        .collect();
+
+    steps.sort();
+    println!("part2 min steps {}", steps[0]);
 }
