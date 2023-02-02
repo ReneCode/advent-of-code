@@ -5,6 +5,10 @@ const CODE_ADD: i32 = 1;
 const CODE_MULTIPLY: i32 = 2;
 const CODE_SAVE_INPUT: i32 = 3;
 const CODE_OUTPUT: i32 = 4;
+const CODE_JUMP_IF_TRUE: i32 = 5;
+const CODE_JUMP_IF_FALSE: i32 = 6;
+const CODE_CMP_IF_LT: i32 = 7;
+const CODE_CMP_IF_EQ: i32 = 8;
 
 enum Mode {
     Position = 0,
@@ -17,6 +21,7 @@ fn main() {
     if let Some(input) = util::io::get_lines("./05.data") {
         if let Some(line) = input.get(0) {
             part_1(line.as_str());
+            part_2(line.as_str());
         }
     }
 }
@@ -26,11 +31,65 @@ fn part_1(line: &str) {
     println!("part-1 output: {}", result)
 }
 
+fn part_2(line: &str) {
+    let result = work_programm(line, 5);
+    println!("part-1 output: {}", result)
+}
+
+
 #[test]
 fn simple_input_output() {
     let programm = "3,0,4,0,99";
     assert_eq!(work_programm(programm, 44), 44);
 }
+
+#[test]
+fn test_5_less_than_8() {
+    let programm = "3,3,1107,-1,8,3,4,3,99";
+    assert_eq!(work_programm(programm, 5), 1);
+}
+
+#[test]
+fn test_9_not_less_than_8() {
+    let programm = "3,3,1107,-1,8,3,4,3,99";
+    assert_eq!(work_programm(programm, 9), 0);
+}
+
+#[test]
+fn test_8_equal_8() {
+    let programm = "3,9,8,9,10,9,4,9,99,-1,8";
+    assert_eq!(work_programm(programm, 8), 1);
+}
+
+#[test]
+fn test_5_not_equal_8() {
+    let programm = "3,9,8,9,10,9,4,9,99,-1,8";
+    assert_eq!(work_programm(programm, 5), 0);
+}
+
+
+#[test]
+fn test_large_5_below_8() {
+    let programm = 
+    "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
+    assert_eq!(work_programm(programm, 5), 999);
+}
+
+#[test]
+fn test_large_8_eq_8() {
+    let programm = 
+    "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
+    assert_eq!(work_programm(programm, 8), 1000);
+}
+
+#[test]
+fn test_large_12_greater_8() {
+    let programm = 
+    "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
+    assert_eq!(work_programm(programm, 12), 1001);
+}
+
+
 
 fn work_programm(line: &str, input: i32) -> i32 {
     let mut program: Vec<i32> = line
@@ -50,22 +109,6 @@ fn work_programm(line: &str, input: i32) -> i32 {
         let opcode = program[idx];
         match opcode {
             CODE_STOP => break,
-            CODE_ADD => {
-                idx = calc_with_mode(
-                    &mut program,
-                    idx,
-                    (Mode::Position, Mode::Position, Mode::Position),
-                    |a, b| a + b,
-                );
-            }
-            CODE_MULTIPLY => {
-                idx = calc_with_mode(
-                    &mut program,
-                    idx,
-                    (Mode::Position, Mode::Position, Mode::Position),
-                    |a, b| a * b,
-                );
-            }
             CODE_SAVE_INPUT => {
                 // todo
                 let adr = program[idx + 1] as usize;
@@ -141,6 +184,30 @@ fn run_instruction(
         CODE_OUTPUT => {
             result = output_with_mode(program, idx, mode_first, output);
         }
+
+        CODE_JUMP_IF_TRUE => {
+            result = jump_if(program, idx, (mode_first, mode_second), |v| v != 0);
+        }
+
+        CODE_JUMP_IF_FALSE => {
+            result = jump_if(program, idx, (mode_first, mode_second), |v| v == 0);
+        }
+        CODE_CMP_IF_LT => {
+            result = cmp_if(
+                program,
+                idx,
+                (mode_first, mode_second, mode_third),
+                |a, b| a < b,
+            )
+        }
+        CODE_CMP_IF_EQ => {
+            result = cmp_if(
+                program,
+                idx,
+                (mode_first, mode_second, mode_third),
+                |a, b| a == b,
+            )
+        }
         _ => {
             panic!("bad opcode {}", opcode);
             result = 0
@@ -148,6 +215,37 @@ fn run_instruction(
     }
 
     result
+}
+
+fn cmp_if(
+    program: &mut Vec<i32>,
+    idx: usize,
+    modes: (Mode, Mode, Mode),
+    cmp_fn: fn(i32, i32) -> bool,
+) -> usize {
+    let a_adr = get_adr(program, idx + 1, modes.0);
+    let b_adr = get_adr(program, idx + 2, modes.1);
+    let result_adr = get_adr(program, idx + 3, modes.2);
+    let val_a = program[a_adr];
+    let val_b = program[b_adr];
+    if cmp_fn(val_a, val_b) {
+        program[result_adr] = 1;
+    } else {
+        program[result_adr] = 0;
+    }
+    idx + 4
+}
+
+fn jump_if(program: &[i32], idx: usize, modes: (Mode, Mode), check_fn: fn(i32) -> bool) -> usize {
+    let a_adr = get_adr(program, idx + 1, modes.0);
+    let b_adr = get_adr(program, idx + 2, modes.1);
+    let val_a = program[a_adr];
+    let val_b = program[b_adr] as usize;
+    if check_fn(val_a) {
+        val_b
+    } else {
+        idx + 3
+    }
 }
 
 fn get_adr(program: &[i32], idx: usize, mode: Mode) -> usize {
