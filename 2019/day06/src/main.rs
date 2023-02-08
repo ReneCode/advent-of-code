@@ -5,56 +5,63 @@ const CENTER_OF_MASS: &str = "COM";
 struct Orbit {
     center: String,
     outside: String,
-    count_orbit: i32,
 }
 impl Orbit {
     fn new(center: &str, outside: &str) -> Orbit {
         Orbit {
             center: String::from(center),
             outside: String::from(outside),
-            count_orbit: 0,
         }
     }
 }
 
-struct Universe {
-    orbits: Vec<Orbit>,
+#[derive(Debug)]
+struct Node {
+    name: String,
+    distance: i32,
+    children: Vec<Node>,
 }
 
-impl Universe {
-    fn get_center(&self, outside: &str) -> Option<String> {
-        if let Some(found) = self.orbits.iter().find(|o| o.outside == outside) {
-            Some(found.center.clone())
-        } else {
-            None
+impl Node {
+    fn new(name: &str, distance: i32) -> Self {
+        Node {
+            name: String::from(name),
+            distance: distance,
+            children: Vec::new(),
         }
     }
+}
 
-    fn count_center(&self, outside: &str) -> i32 {
-        let mut total = 0;
-        let mut current_outside = outside;
-        while current_outside != CENTER_OF_MASS {
-            if let Some(found) = self.orbits.iter().find(|o| o.outside == current_outside) {
-                total += 1;
-                current_outside = found.center.as_str();
-            }
-            // if let Some(found) = self.orbits.iter().find(|o| o.outside) == current_outside) {
-            //     total += 1;
-            //     current_outside = found.outside;
-            // }
+fn create_node(all_orbits: &Vec<Orbit>, name: &str, distance: i32) -> Node {
+    let orbits: Vec<&Orbit> = all_orbits.iter().filter(|o| o.center == name).collect();
+    let mut node = Node::new(name, distance);
+    if orbits.len() > 0 {
+        let mut children: Vec<Node> = Vec::new();
+        for orbit in orbits {
+            let child = create_node(all_orbits, orbit.outside.as_str(), distance + 1);
+            children.push(child);
         }
-        total
+        node.children = children;
+    }
+    node
+}
+
+fn sum_distance(node: &Node, total: &mut i32) {
+    *total += node.distance;
+    for child in node.children.iter() {
+        sum_distance(&child, total)
     }
 }
 
 fn main() {
     println!("Hello, day06!");
     if let Some(orbits) = get_data("./06.data") {
-        part_1(&orbits);
+        let root = create_node(&orbits, CENTER_OF_MASS, 0);
+        part_1(&root);
     }
 }
 
-fn get_data(filename: &str) -> Option<Universe> {
+fn get_data(filename: &str) -> Option<Vec<Orbit>> {
     if let Some(input) = util::io::get_lines(filename) {
         let orbits: Vec<Orbit> = input
             .iter()
@@ -64,18 +71,14 @@ fn get_data(filename: &str) -> Option<Universe> {
                 orbit
             })
             .collect();
-        Some(Universe { orbits: orbits })
+        Some(orbits)
     } else {
         None
     }
 }
 
-fn part_1(universe: &Universe) {
-    let mut total = 0;
-    for orbit in universe.orbits.iter() {
-        let count = universe.count_center(&orbit.outside);
-        total += count;
-    }
-
-    println!("part1 total {}", total);
+fn part_1(root: &Node) {
+    let mut total: i32 = 0;
+    sum_distance(&root, &mut total);
+    println!("part-1 total {}", total);
 }
