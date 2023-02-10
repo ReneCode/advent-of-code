@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 extern crate util;
 
 const CENTER_OF_MASS: &str = "COM";
@@ -58,6 +60,7 @@ fn main() {
     if let Some(orbits) = get_data("./06.data") {
         let root = create_node(&orbits, CENTER_OF_MASS, 0);
         part_1(&root);
+        part_2(&root);
     }
 }
 
@@ -81,4 +84,38 @@ fn part_1(root: &Node) {
     let mut total: i32 = 0;
     sum_distance(&root, &mut total);
     println!("part-1 total {}", total);
+}
+
+fn part_2(root: &Node) {
+    let mut way_you: Vec<&str> = Vec::new();
+    collect_way(root, "YOU", &mut way_you);
+    let mut way_san: Vec<&str> = Vec::new();
+    collect_way(root, "SAN", &mut way_san);
+
+    let mut shared_name = "";
+    for name in way_you.iter() {
+        if way_san.contains(&name) {
+            shared_name = *name;
+            break;
+        }
+    }
+    if let Some(pos_you) = way_you.iter().position(|n| *n == shared_name) {
+        if let Some(pos_san) = way_san.iter().position(|n| *n == shared_name) {
+            println!("part-2 orbtit transfers {}", (pos_san - 1) + (pos_you - 1));
+        }
+    }
+}
+
+fn collect_way<'a>(root: &'a Node, target: &str, way: &mut Vec<&'a str>) -> bool {
+    if root.name == target {
+        true
+    } else {
+        for child in root.children.iter() {
+            if collect_way(child, target, way) {
+                way.push(child.name.as_str());
+                return true;
+            }
+        }
+        false
+    }
 }
