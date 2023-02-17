@@ -20,6 +20,7 @@ enum StepResult {
     Stop,
 }
 
+#[derive(PartialEq)]
 enum Mode {
     Position = 0,
     Immediate = 1,
@@ -67,7 +68,7 @@ impl Amplifier {
 fn main() {
     println!("Hello, day09!");
 
-    if let Some(input) = util::io::get_lines("./07.data") {
+    if let Some(input) = util::io::get_lines("./09.data") {
         if let Some(line) = input.get(0) {
             part_1(line.as_str());
             part_2(line.as_str());
@@ -89,15 +90,21 @@ fn create_program(line: &str) -> Program {
     program
 }
 
-fn part_1(line: &str) {}
+fn part_1(line: &str) {
+    let mut program = create_program(line);
+    let mut inputs = vec![1];
+
+    let output = run_programm(&mut program, &mut inputs);
+    println!("part-1 keycode: {:?}", output);
+}
 
 fn part_2(line: &str) {}
 
-fn run_sequence(line: &str, phase_settings: &Vec<i64>) -> i64 {
-    let mut value = 0;
+fn run_sequence(line: &str, phase_settings: &Vec<i64>) -> Vec<i64> {
+    let mut value = vec![0i64];
     for phase_setting in phase_settings {
         let mut program = create_program(line);
-        let mut inputs = vec![*phase_setting, value];
+        let mut inputs = vec![*phase_setting, value[0]];
         value = run_programm(&mut program, &mut inputs);
     }
     value
@@ -148,19 +155,19 @@ fn run_amplifiers_loop(line: &str, phase_settings: &Vec<i64>) -> i64 {
 #[test]
 fn test_a() {
     let line = "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0";
-    assert_eq!(43210, run_sequence(line, &vec![4, 3, 2, 1, 0]));
+    assert_eq!(vec![43210], run_sequence(line, &vec![4, 3, 2, 1, 0]));
 }
 
 #[test]
 fn test_2() {
     let line = "3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0";
-    assert_eq!(54321, run_sequence(line, &vec![0, 1, 2, 3, 4]));
+    assert_eq!(vec![54321], run_sequence(line, &vec![0, 1, 2, 3, 4]));
 }
 
 #[test]
 fn test_3() {
     let line = "3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0";
-    assert_eq!(65210, run_sequence(line, &vec![1, 0, 4, 3, 2]));
+    assert_eq!(vec![65210], run_sequence(line, &vec![1, 0, 4, 3, 2]));
 }
 
 #[test]
@@ -177,20 +184,49 @@ fn test_5() {
 }
 
 #[test]
-fn test_6() {
+fn test_09_1() {
     let line = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99";
     let mut program = create_program(line);
-    assert_eq!(123, run_programm(&mut program, &mut vec![]));
+    let expect = create_program(line);
+    assert_eq!(expect, run_programm(&mut program, &mut vec![]));
 }
 
-fn run_programm(program: &mut Program, inputs: &mut Vec<i64>) -> i64 {
+#[test]
+fn test_09_2() {
+    let line = "1102,34915192,34915192,7,4,7,99,0";
+    let mut program = create_program(line);
+    let val = run_programm(&mut program, &mut vec![]);
+    assert_eq!(16, format!("{}", val[0]).len());
+}
+
+#[test]
+fn test_09_3() {
+    let line = "104,1125899906842624,99";
+    let mut program = create_program(line);
+    assert_eq!(
+        vec![1125899906842624],
+        run_programm(&mut program, &mut vec![])
+    );
+}
+
+#[test]
+fn test_09_relativ() {
+    let line = "3,1985,109,2000,109,19,204,-34,99";
+    let mut program = create_program(line);
+    assert_eq!(vec![42], run_programm(&mut program, &mut vec![42]));
+}
+
+fn run_programm(program: &mut Program, inputs: &mut Vec<i64>) -> Vec<i64> {
     let mut idx: usize = 0;
     let mut relative_base: usize = 0;
-    let mut output: i64 = 0;
+    let mut output: Vec<i64> = Vec::new();
     loop {
         let step_result = step_program(program, inputs, &mut idx, &mut relative_base);
         match step_result {
-            StepResult::Output(output_value) => output = output_value,
+            StepResult::Output(output_value) => {
+                println!("output {}", output_value);
+                output.push(output_value);
+            }
             StepResult::Stop => break,
             StepResult::Ok => {}
         }
@@ -204,40 +240,7 @@ fn step_program(
     address: &mut usize,
     relative_base: &mut usize,
 ) -> StepResult {
-    let opcode = program[*address];
-    match opcode {
-        CODE_STOP => StepResult::Stop,
-        CODE_SAVE_INPUT => {
-            let adr = program[*address + 1] as usize;
-            let input_value = inputs.remove(0);
-            program[adr] = input_value;
-            *address += 2;
-            StepResult::Ok
-        }
-        CODE_OUTPUT => {
-            // todo
-            let adr = program[*address + 1] as usize;
-            let output = program[adr];
-            *address += 2;
-            StepResult::Output(output)
-        }
-        _ => run_instruction(opcode, program, address, relative_base),
-    }
-}
-
-fn parse_char_to_int(c: char) -> u32 {
-    match c.to_digit(10) {
-        Some(n) => n,
-        _ => 0,
-    }
-}
-
-fn run_instruction(
-    instruction: i64,
-    program: &mut Program,
-    address: &mut usize,
-    relative_base: &mut usize,
-) -> StepResult {
+    let instruction = read_value(program, *address);
     let reverse_instruction: Vec<i64> = instruction
         .to_string()
         .chars()
@@ -245,7 +248,10 @@ fn run_instruction(
         .rev()
         .collect();
 
-    let opcode = reverse_instruction[0];
+    let mut opcode = reverse_instruction[0];
+    if reverse_instruction.len() >= 2 {
+        opcode += reverse_instruction[1] * 10;
+    }
 
     let mut mode_first = Mode::Position;
     let mut mode_second = Mode::Position;
@@ -259,8 +265,15 @@ fn run_instruction(
     if reverse_instruction.len() >= 5 {
         mode_third = get_mode(reverse_instruction[4])
     }
+
+    assert!(mode_third != Mode::Immediate);
+
     let mut result = StepResult::Ok;
     match opcode {
+        CODE_STOP => result = StepResult::Stop,
+        CODE_SAVE_INPUT => {
+            result = save_input(program, address, *relative_base, mode_first, inputs);
+        }
         CODE_ADD => {
             result = calc_with_mode(
                 program,
@@ -329,6 +342,13 @@ fn run_instruction(
     result
 }
 
+fn parse_char_to_int(c: char) -> u32 {
+    match c.to_digit(10) {
+        Some(n) => n,
+        _ => 0,
+    }
+}
+
 fn get_mode(instruction: i64) -> Mode {
     match instruction {
         0 => Mode::Position,
@@ -336,6 +356,20 @@ fn get_mode(instruction: i64) -> Mode {
         2 => Mode::Relative,
         _ => Mode::Position,
     }
+}
+
+fn save_input(
+    program: &mut Program,
+    address: &mut usize,
+    relative_base: usize,
+    mode: Mode,
+    inputs: &mut Vec<i64>,
+) -> StepResult {
+    let adr = get_adr(program, *address + 1, mode, relative_base);
+    let input_value = inputs.remove(0);
+    write_value(program, adr, input_value);
+    *address += 2;
+    StepResult::Ok
 }
 
 fn cmp_if(
@@ -348,18 +382,18 @@ fn cmp_if(
     let a_adr = get_adr(program, address + 1, modes.0, relative_base);
     let b_adr = get_adr(program, address + 2, modes.1, relative_base);
     let result_adr = get_adr(program, address + 3, modes.2, relative_base);
-    let val_a = program[a_adr];
-    let val_b = program[b_adr];
+    let val_a = read_value(program, a_adr);
+    let val_b = read_value(program, b_adr);
     if cmp_fn(val_a, val_b) {
-        program[result_adr] = 1;
+        write_value(program, result_adr, 1);
     } else {
-        program[result_adr] = 0;
+        write_value(program, result_adr, 0);
     }
     address + 4
 }
 
 fn jump_if(
-    program: &[i64],
+    program: &mut Program,
     address: usize,
     relative_base: usize,
     modes: (Mode, Mode),
@@ -367,8 +401,8 @@ fn jump_if(
 ) -> usize {
     let a_adr = get_adr(program, address + 1, modes.0, relative_base);
     let b_adr = get_adr(program, address + 2, modes.1, relative_base);
-    let val_a = program[a_adr];
-    let val_b = program[b_adr] as usize;
+    let val_a = read_value(program, a_adr);
+    let val_b = read_value(program, b_adr) as usize;
     if check_fn(val_a) {
         val_b
     } else {
@@ -376,13 +410,28 @@ fn jump_if(
     }
 }
 
-fn get_adr(program: &[i64], idx: usize, mode: Mode, relative_base: usize) -> usize {
+fn get_adr(program: &mut Program, address: usize, mode: Mode, relative_base: usize) -> usize {
     match mode {
-        Mode::Position => program[idx] as usize,
-        Mode::Immediate => idx,
-        Mode::Relative => (relative_base as i64 + program[idx] as i64) as usize,
+        Mode::Position => read_value(program, address) as usize,
+        Mode::Immediate => address,
+        Mode::Relative => (relative_base as i64 + read_value(program, address) as i64) as usize,
     }
 }
+
+fn read_value(program: &mut Program, adress: usize) -> i64 {
+    if adress >= program.len() {
+        program.resize(adress + 1, 0);
+    }
+    program[adress]
+}
+
+fn write_value(program: &mut Program, adress: usize, value: i64) {
+    if adress >= program.len() {
+        program.resize(adress + 1, 0);
+    }
+    program[adress] = value;
+}
+
 fn calc_with_mode(
     program: &mut Program,
     address: &mut usize,
@@ -392,32 +441,32 @@ fn calc_with_mode(
     let a_adr = get_adr(program, *address + 1, modes.0, *address);
     let b_adr = get_adr(program, *address + 2, modes.1, *address);
     let result_adr = get_adr(program, *address + 3, modes.2, *address);
-    let result = calc_fn(program[a_adr], program[b_adr]);
-    program[result_adr] = result;
+    let result = calc_fn(read_value(program, a_adr), read_value(program, b_adr));
+    write_value(program, result_adr, result);
     *address += 4;
     StepResult::Ok
 }
 
 fn output_with_mode(
-    program: &[i64],
+    program: &mut Program,
     idx: &mut usize,
     relative_base: usize,
     mode_parameter: Mode,
 ) -> StepResult {
     let adr = get_adr(program, *idx + 1, mode_parameter, relative_base);
-    let output = program[adr];
+    let output = read_value(program, adr);
     *idx += 2;
     StepResult::Output(output)
 }
 
 fn set_relative_address(
-    program: &[i64],
+    program: &mut Program,
     address: &mut usize,
     relative_base: &mut usize,
     mode_parameter: Mode,
 ) {
     let adr = get_adr(program, *address + 1, mode_parameter, *address);
-    let value = program[adr];
+    let value = read_value(program, adr);
     let a = (*relative_base) as i64 + value as i64;
     *relative_base = a as usize;
     *address += 2;
