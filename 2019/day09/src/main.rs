@@ -282,7 +282,12 @@ fn part_1(line: &str) {
     println!("part-1 keycode: {:?}", amp.outputs);
 }
 
-fn part_2(line: &str) {}
+fn part_2(line: &str) {
+    let mut inputs = vec![2];
+    let mut amp = Amplifier::new(line, inputs);
+    let a = amp.run();
+    println!("part-2 keycode: {:?}", amp.outputs);
+}
 
 #[test]
 fn test_2_1() {
