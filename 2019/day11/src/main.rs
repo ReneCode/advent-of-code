@@ -134,6 +134,33 @@ impl Area {
             COLOR_BLACK
         }
     }
+
+    fn print_tiles(&self) {
+        let mut min_x = 0;
+        let mut max_x = 0;
+        let mut min_y = 0;
+        let mut max_y = 0;
+        for pt in self.tiles.keys() {
+            min_x = min_x.min(pt.x);
+            max_x = max_x.max(pt.x);
+            min_y = min_y.min(pt.y);
+            max_y = max_y.max(pt.y);
+        }
+        for y in (min_y..=max_y).rev() {
+            let mut line = String::from("");
+            for x in (min_x..=max_x) {
+                let key = Point::new(x, y);
+                if let Some(color) = self.tiles.get(&key) {
+                    if *color == COLOR_WHITE {
+                        line.push('#');
+                    } else {
+                        line.push(' ');
+                    }
+                }
+            }
+            println!("{}", line);
+        }
+    }
 }
 
 enum Parameter {
@@ -230,8 +257,6 @@ impl Instruction {
         result
     }
 }
-
-type CallbackType = dyn FnMut(i32) -> ();
 
 struct Amplifier {
     programm: Program,
@@ -387,7 +412,7 @@ fn main() {
     if let Some(input) = util::io::get_lines("./11.data") {
         if let Some(line) = input.get(0) {
             part_1(line.as_str());
-            // part_2(line.as_str());
+            part_2(line.as_str());
         }
     }
 }
@@ -407,7 +432,6 @@ fn create_program(line: &str) -> Program {
 }
 
 fn part_1(line: &str) {
-    let mut inputs = vec![COLOR_BLACK];
     let mut amp = Amplifier::new(line);
     amp.add_input(COLOR_BLACK);
     let mut area = Area::new();
@@ -417,9 +441,11 @@ fn part_1(line: &str) {
 
 fn part_2(line: &str) {
     let mut amp = Amplifier::new(line);
-    amp.add_input(2);
-    let a = amp.run();
-    println!("part-2 keycode: {:?}", amp.outputs);
+    amp.add_input(COLOR_WHITE);
+    let mut area = Area::new();
+    amp.walk_robot(&mut area);
+    area.print_tiles();
+    // println!("part-2 count set color: {:?}", area.count_set_color);
 }
 
 #[test]
