@@ -35,6 +35,9 @@ type Program = Vec<i64>;
 struct ArcadeCabinet {
     last_outputs: Vec<i64>,
     tiles: HashMap<Point, i64>,
+    score: i64,
+    x_ball: i32,
+    x_paddle: i32,
 }
 
 impl ArcadeCabinet {
@@ -42,20 +45,55 @@ impl ArcadeCabinet {
         ArcadeCabinet {
             last_outputs: Vec::new(),
             tiles: HashMap::new(),
+            score: 0,
+            x_ball: 0,
+            x_paddle: 0,
         }
     }
 
     fn take_output(&mut self, value: i64) -> Option<i64> {
         // println!("output: {}", value);
+
+        // std::process::Command::new("clear").status().unwrap();
+
         self.last_outputs.push(value);
+        let mut result: Option<i64> = None;
 
         if self.last_outputs.len() == 3 {
-            let point = Point::new(self.last_outputs[0] as i32, self.last_outputs[1] as i32);
-            let id = self.last_outputs[2];
-            self.tiles.insert(point, id);
+            let first_val = self.last_outputs[0] as i32;
+            let second_val = self.last_outputs[1] as i32;
+            let third_val = self.last_outputs[2];
+            if first_val == -1 && second_val == 0 {
+                self.score = third_val;
+                println!(" >>> score {}", third_val);
+            } else {
+                let point = Point::new(first_val, second_val);
+                self.tiles.insert(point, third_val);
+
+                match third_val {
+                    TILE_BALL => {
+                        self.x_ball = first_val;
+                    }
+                    TILE_HORIZONTAL_PADDLE => {
+                        self.x_paddle = first_val;
+                        self.print_tiles();
+                        println!("paddle: {}, ball:{}", self.x_paddle, self.x_ball);
+                        result = Some(0);
+                        let x_target = 22;
+                        if x_target < self.x_paddle {
+                            result = Some(-1)
+                        }
+                        if x_target > self.x_paddle {
+                            result = Some(1)
+                        }
+                        println!("result: {:?}\n", result);
+                    }
+                    _ => {}
+                }
+            }
             self.last_outputs.clear();
         }
-        None
+        result
     }
 
     fn count_blocks(&self) -> i32 {
@@ -239,6 +277,7 @@ impl Amplifier {
                 StepResult::Output(val) => {
                     if let Some(input) = arcade_cabinet.take_output(val) {
                         self.add_input(input);
+                        // println!("input-len {}", self.inputs.len());
                     }
                 }
                 StepResult::Ok => {}
@@ -348,7 +387,7 @@ fn main() {
 
     if let Some(input) = util::io::get_lines("./13.data") {
         if let Some(line) = input.get(0) {
-            part_1(line.as_str());
+            // part_1(line.as_str());
             part_2(line.as_str());
         }
     }
@@ -371,14 +410,23 @@ fn create_program(line: &str) -> Program {
 fn part_1(line: &str) {
     let mut amp = Amplifier::new(line);
     let mut arcade_cabinet = ArcadeCabinet::new();
-    let a = amp.play(&mut arcade_cabinet);
+    amp.play(&mut arcade_cabinet);
     arcade_cabinet.print_tiles();
     println!("part-1 count blocks: {:?}", arcade_cabinet.count_blocks());
 }
 
 fn part_2(line: &str) {
     let mut amp = Amplifier::new(line);
-    // println!("part-2 count set color: {:?}", area.count_set_color);
+    amp.programm[0] = 2;
+
+    let mut arcade_cabinet = ArcadeCabinet::new();
+    amp.play(&mut arcade_cabinet);
+    // arcade_cabinet.print_tiles();
+    // amp.inputs.push(1);
+    // amp.play(&mut arcade_cabinet);
+    // arcade_cabinet.print_tiles();
+
+    println!("part-2 score: {}", arcade_cabinet.score);
 }
 
 #[test]
