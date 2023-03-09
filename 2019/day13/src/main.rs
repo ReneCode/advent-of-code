@@ -32,12 +32,60 @@ enum StepResult {
 
 type Program = Vec<i64>;
 
+pub trait TakeInputOutput {
+    fn read_input(&mut self) -> i64;
+    fn take_output(&mut self, value: i64);
+}
+
 struct ArcadeCabinet {
     last_outputs: Vec<i64>,
     tiles: HashMap<Point, i64>,
     score: i64,
     x_ball: i32,
     x_paddle: i32,
+}
+
+impl TakeInputOutput for ArcadeCabinet {
+    fn read_input(&mut self) -> i64 {
+        if self.x_ball < self.x_paddle {
+            return -1;
+        }
+        if self.x_ball > self.x_paddle {
+            return 1;
+        }
+        0
+    }
+
+    fn take_output(&mut self, value: i64) {
+        // println!("output: {}", value);
+
+        self.last_outputs.push(value);
+
+        if self.last_outputs.len() == 3 {
+            let first_val = self.last_outputs[0] as i32;
+            let second_val = self.last_outputs[1] as i32;
+            let third_val = self.last_outputs[2];
+            if first_val == -1 && second_val == 0 {
+                self.score = third_val;
+            } else {
+                let point = Point::new(first_val, second_val);
+                self.tiles.insert(point, third_val);
+
+                match third_val {
+                    TILE_BALL => {
+                        self.x_ball = first_val;
+                        // std::process::Command::new("clear").status().unwrap();
+                        // self.print_tiles();
+                    }
+                    TILE_HORIZONTAL_PADDLE => {
+                        self.x_paddle = first_val;
+                    }
+                    _ => {}
+                }
+            }
+            self.last_outputs.clear();
+        }
+    }
 }
 
 impl ArcadeCabinet {
@@ -49,51 +97,6 @@ impl ArcadeCabinet {
             x_ball: 0,
             x_paddle: 0,
         }
-    }
-
-    fn take_output(&mut self, value: i64) -> Option<i64> {
-        // println!("output: {}", value);
-
-        // std::process::Command::new("clear").status().unwrap();
-
-        self.last_outputs.push(value);
-        let mut result: Option<i64> = None;
-
-        if self.last_outputs.len() == 3 {
-            let first_val = self.last_outputs[0] as i32;
-            let second_val = self.last_outputs[1] as i32;
-            let third_val = self.last_outputs[2];
-            if first_val == -1 && second_val == 0 {
-                self.score = third_val;
-                println!(" >>> score {}", third_val);
-            } else {
-                let point = Point::new(first_val, second_val);
-                self.tiles.insert(point, third_val);
-
-                match third_val {
-                    TILE_BALL => {
-                        self.x_ball = first_val;
-                    }
-                    TILE_HORIZONTAL_PADDLE => {
-                        self.x_paddle = first_val;
-                        self.print_tiles();
-                        println!("paddle: {}, ball:{}", self.x_paddle, self.x_ball);
-                        result = Some(0);
-                        let x_target = 22;
-                        if x_target < self.x_paddle {
-                            result = Some(-1)
-                        }
-                        if x_target > self.x_paddle {
-                            result = Some(1)
-                        }
-                        println!("result: {:?}\n", result);
-                    }
-                    _ => {}
-                }
-            }
-            self.last_outputs.clear();
-        }
-        result
     }
 
     fn count_blocks(&self) -> i32 {
@@ -169,7 +172,11 @@ enum Instruction {
 }
 
 impl Instruction {
-    pub fn execute(&self, amplifier: &mut Amplifier) -> StepResult {
+    pub fn execute(
+        &self,
+        amplifier: &mut Amplifier,
+        device: &mut impl TakeInputOutput,
+    ) -> StepResult {
         let result = match self {
             Self::Stop => StepResult::Stop,
             Self::Add(a, b, c) => {
@@ -185,7 +192,7 @@ impl Instruction {
                 StepResult::Ok
             }
             Self::SaveInput(a) => {
-                let val = amplifier.inputs.remove(0);
+                let val = device.read_input();
                 amplifier.write_value(a, val);
                 StepResult::Ok
             }
@@ -237,16 +244,27 @@ struct Amplifier {
     programm: Program,
     address: usize,
     relative_base: usize,
+}
+
+struct DemoDevice {
     inputs: Vec<i64>,
     outputs: Vec<i64>,
 }
 
-impl Amplifier {
-    fn new(line: &str) -> Self {
-        Amplifier {
-            programm: create_program(line),
-            address: 0,
-            relative_base: 0,
+impl TakeInputOutput for DemoDevice {
+    fn read_input(&mut self) -> i64 {
+        let val = self.inputs.remove(0);
+        val
+    }
+
+    fn take_output(&mut self, value: i64) {
+        self.outputs.push(value);
+    }
+}
+
+impl DemoDevice {
+    fn new() -> Self {
+        DemoDevice {
             inputs: Vec::new(),
             outputs: Vec::new(),
         }
@@ -255,30 +273,40 @@ impl Amplifier {
     fn add_input(&mut self, input: i64) {
         self.inputs.push(input);
     }
+}
 
-    fn run(&mut self) -> StepResult {
+impl Amplifier {
+    fn new(line: &str) -> Self {
+        Amplifier {
+            programm: create_program(line),
+            address: 0,
+            relative_base: 0,
+        }
+    }
+
+    fn run(&mut self, device: &mut impl TakeInputOutput) -> StepResult {
         loop {
-            let result = self.step();
+            let result = self.step(device);
             match result {
                 StepResult::Stop => break result,
                 StepResult::Output(val) => {
-                    self.outputs.push(val);
+                    device.take_output(val);
+                    // self.outputs.push(val);
                 }
                 StepResult::Ok => {}
             }
         }
     }
 
-    fn play(&mut self, arcade_cabinet: &mut ArcadeCabinet) {
+    fn play(&mut self, device: &mut impl TakeInputOutput) {
         loop {
-            let result = self.step();
+            let result = self.step(device);
             match result {
                 StepResult::Stop => break,
                 StepResult::Output(val) => {
-                    if let Some(input) = arcade_cabinet.take_output(val) {
-                        self.add_input(input);
-                        // println!("input-len {}", self.inputs.len());
-                    }
+                    device.take_output(val)
+                    // self.add_input(input);
+                    // println!("input-len {}", self.inputs.len());
                 }
                 StepResult::Ok => {}
             }
@@ -291,7 +319,7 @@ impl Amplifier {
         code
     }
 
-    fn step(&mut self) -> StepResult {
+    fn step(&mut self, device: &mut impl TakeInputOutput) -> StepResult {
         let code = self.read();
         let opcode = code % 100;
         let mode_a = (code / 100) % 10;
@@ -336,7 +364,7 @@ impl Amplifier {
             _ => panic!("bad opcode {opcode}"),
         };
 
-        instruction.execute(self)
+        instruction.execute(self, device)
     }
 
     fn read_value(&mut self, parameter: &Parameter) -> i64 {
@@ -387,7 +415,7 @@ fn main() {
 
     if let Some(input) = util::io::get_lines("./13.data") {
         if let Some(line) = input.get(0) {
-            // part_1(line.as_str());
+            part_1(line.as_str());
             part_2(line.as_str());
         }
     }
@@ -433,7 +461,8 @@ fn part_2(line: &str) {
 fn test_2_1() {
     let line = "1,0,0,0,99";
     let mut amp = Amplifier::new(line);
-    let a = amp.run();
+    let mut device = DemoDevice::new();
+    let a = amp.run(&mut device);
     let expect = vec![2, 0, 0, 0, 99];
     assert_eq!(expect, amp.programm);
 }
@@ -442,7 +471,8 @@ fn test_2_1() {
 fn test_2_2() {
     let line = "2,3,0,3,99";
     let mut amp = Amplifier::new(line);
-    let a = amp.run();
+    let mut device = DemoDevice::new();
+    let a = amp.run(&mut device);
     let expect = vec![2, 3, 0, 6, 99];
     assert_eq!(expect, amp.programm);
 }
@@ -451,7 +481,8 @@ fn test_2_2() {
 fn test_2_3() {
     let line = "2,4,4,5,99,0";
     let mut amp = Amplifier::new(line);
-    let a = amp.run();
+    let mut device = DemoDevice::new();
+    amp.run(&mut device);
     let expect = vec![2, 4, 4, 5, 99, 9801];
     assert_eq!(expect, amp.programm);
 }
@@ -460,7 +491,8 @@ fn test_2_3() {
 fn test_2_4() {
     let line = "1,1,1,4,99,5,6,0,99";
     let mut amp = Amplifier::new(line);
-    let a = amp.run();
+    let mut device = DemoDevice::new();
+    amp.run(&mut device);
     let expect = vec![30, 1, 1, 4, 2, 5, 6, 0, 99];
     assert_eq!(expect, amp.programm);
 }
@@ -469,50 +501,57 @@ fn test_2_4() {
 fn test_5_equal_8() {
     let line = "3,9,8,9,10,9,4,9,99,-1,8";
     let mut amp = Amplifier::new(line);
-    amp.add_input(8);
-    let a = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(8);
+    amp.run(&mut device);
     let expect = vec![1];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
-
 #[test]
 fn test_5_not_equal_8() {
     let line = "3,9,8,9,10,9,4,9,99,-1,8";
     let mut amp = Amplifier::new(line);
-    amp.add_input(7);
-    let a = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(7);
+    amp.run(&mut device);
     let expect = vec![0];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
 fn test_5_less_than_8() {
     let line = "3,9,7,9,10,9,4,9,99,-1,8";
     let mut amp = Amplifier::new(line);
-    amp.add_input(7);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(7);
+    amp.run(&mut device);
+
     let expect = vec![1];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
 fn test_5_not_less_than_8() {
     let line = "3,9,7,9,10,9,4,9,99,-1,8";
     let mut amp = Amplifier::new(line);
-    amp.add_input(8);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(8);
+    amp.run(&mut device);
+
     let expect = vec![0];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
 fn test_5_equal_8_immediate_mode() {
     let line = "3,3,1108,-1,8,3,4,3,99";
     let mut amp = Amplifier::new(line);
-    amp.add_input(8);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(8);
+    amp.run(&mut device);
+
     let expect = vec![1];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
@@ -520,10 +559,12 @@ fn test_5_not_equal_8_immediate_mode() {
     let line = "3,3,1108,-1,8,3,4,3,99";
     let inputs = vec![9];
     let mut amp = Amplifier::new(line);
-    amp.add_input(9);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(9);
+    amp.run(&mut device);
+
     let expect = vec![0];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
@@ -531,66 +572,76 @@ fn test_5_less_than_8_immediate_mode() {
     let line = "3,3,1107,-1,8,3,4,3,99";
     let inputs = vec![6];
     let mut amp = Amplifier::new(line);
-    amp.add_input(6);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(6);
+    amp.run(&mut device);
+
     let expect = vec![1];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
 fn test_5_not_less_than_8_immediate_mode() {
     let line = "3,3,1107,-1,8,3,4,3,99";
     let mut amp = Amplifier::new(line);
-    amp.add_input(9);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(9);
+    amp.run(&mut device);
+
     let expect = vec![0];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
 fn test_5_999_if_below_8() {
     let line = "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
     let mut amp = Amplifier::new(line);
-    amp.add_input(7);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(7);
+    amp.run(&mut device);
+
     let expect = vec![999];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
 fn test_5_1000_if_equal_8() {
     let line = "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
     let mut amp = Amplifier::new(line);
-    amp.add_input(8);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(8);
+    amp.run(&mut device);
     let expect = vec![1000];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
 fn test_5_1001_if_greater_8() {
     let line = "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
     let mut amp = Amplifier::new(line);
-    amp.add_input(9);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    device.add_input(9);
+    amp.run(&mut device);
     let expect = vec![1001];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
 fn test_9_copy_itself() {
     let line = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99";
     let mut amp = Amplifier::new(line);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    amp.run(&mut device);
     let expect = create_program(line);
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 #[test]
 fn test_amplifier_9_output_16_digit_number() {
     let line = "1102,34915192,34915192,7,4,7,99,0";
     let mut amp = Amplifier::new(line);
-    if let StepResult::Output(output) = amp.run() {
+    let mut device = DemoDevice::new();
+    if let StepResult::Output(output) = amp.run(&mut device) {
         assert_eq!(16, format!("{}", output).len());
     }
 }
@@ -599,9 +650,10 @@ fn test_amplifier_9_output_16_digit_number() {
 fn test_9_output_large_number() {
     let line = "104,1125899906842624,99";
     let mut amp = Amplifier::new(line);
-    let _ = amp.run();
+    let mut device = DemoDevice::new();
+    amp.run(&mut device);
     let expect = vec![1125899906842624];
-    assert_eq!(expect, amp.outputs);
+    assert_eq!(expect, device.outputs);
 }
 
 // --------
