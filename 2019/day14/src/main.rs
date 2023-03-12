@@ -1,6 +1,6 @@
 use util::io;
 
-use std::{collections::HashMap, convert::From, hash::Hash};
+use std::{collections::HashMap, convert::From};
 
 const NAME_ORE: &str = "ORE";
 
@@ -11,7 +11,7 @@ struct CountName {
 
 impl From<&str> for CountName {
     fn from(line: &str) -> Self {
-        let token: Vec<&str> = line.trim().split(" ").collect();
+        let token: Vec<&str> = line.trim().split(' ').collect();
         let count = token[0].parse::<i32>().unwrap();
         let name = String::from(token[1]);
         CountName { count, name }
@@ -30,9 +30,9 @@ fn get_data(filename: &str) -> Option<HashMap<String, Recipe>> {
             let token: Vec<&str> = line.split(" => ").collect();
 
             let sources: Vec<CountName> = token[0]
-                .split(",")
+                .split(',')
                 .map(|l| l.trim())
-                .map(|line| CountName::from(line))
+                .map(CountName::from)
                 .collect();
 
             let target = CountName::from(token[1]);
@@ -60,10 +60,10 @@ fn part_1(recipes: &HashMap<String, Recipe>) {
     let name = "FUEL";
     let mut stock: HashMap<&str, i32> = HashMap::new();
     targets.push((name, 1));
-    while targets.len() > 0 {
+    while !targets.is_empty() {
         let (target, target_count) = targets.remove(0);
 
-        println!("get target {} {}", target, target_count);
+        println!("get target {target} {target_count}");
         if let Some(recipe) = recipes.get(target) {
             let mut count_recipe = 1;
             let recipe_target_count = recipe.target.count;
@@ -77,12 +77,12 @@ fn part_1(recipes: &HashMap<String, Recipe>) {
                 } else {
                     stock.insert(target, not_needed);
                 }
-                println!(">> add stock {}", target);
+                println!(">> add stock {target}");
             }
 
             for source in recipe.sources.iter() {
                 if source.name == NAME_ORE {
-                    count_oer += (source.count * count_recipe);
+                    count_oer += source.count * count_recipe;
                 } else {
                     let mut count_for_this_source = count_recipe;
                     println!(">> look {}", source.name);
@@ -99,6 +99,6 @@ fn part_1(recipes: &HashMap<String, Recipe>) {
         }
     }
 
-    println!("stock {:?}", stock);
-    println!("part1 count ore: {}", count_oer);
+    println!("stock {stock:?}");
+    println!("part1 count ore: {count_oer}");
 }
