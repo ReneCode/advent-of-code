@@ -52,20 +52,6 @@ impl<'a> Solver<'_> {
         if let Some(recipe) = self.recipes.get(name) {
             let count_recipe = self.calc_count_recipe(&recipe.target, count);
 
-            let target = &recipe.target;
-            let not_needed = count_recipe * target.count - count;
-            if not_needed > 0 {
-                self.add_stock(&target.name, not_needed);
-            }
-
-            // if not_needed > 0 {
-            //     if let Some(entry) = self.stock.get_mut(target.name.as_str()) {
-            //         *entry += not_needed;
-            //     } else {
-            //         self.stock.insert(target.name, not_needed);
-            //     }
-            // }
-
             for source in recipe.sources.iter() {
                 if source.name == NAME_ORE {
                     let count_oer = source.count * count_recipe;
@@ -88,38 +74,68 @@ impl<'a> Solver<'_> {
     }
 
     fn calc_count_recipe(&mut self, target: &CountName, total_target_needed: i32) -> i32 {
-        // total_target_needed = 8
-        // recipe.target.count = 7
-        // stock = 4
-        // -> 1
-        let mut in_stock = 0;
-        let mut count_recipe = 1;
-        while count_recipe * target.count < total_target_needed {
-            count_recipe += 1;
-        }
-
         if let Some(stock) = self.stock.get_mut(target.name.as_str()) {
-            if (count_recipe - 1) * target.count + *stock >= total_target_needed {
-                count_recipe -= 1;
-                *stock = total_target_needed - (count_recipe * target.count);
-            }
-        }
+            let (count_recipe, new_stock) =
+                calc_count_recipe_and_stock(target.count, total_target_needed, *stock);
 
-        count_recipe
-    }
-
-    fn add_stock(&mut self, name: &String, count: i32) {
-        if count > 0 {
-            if let Some(entry) = self.stock.get_mut(name) {
-                *entry += count;
-            } else {
-                self.stock.insert(name.clone(), count);
+            if let Some(new_value) = new_stock {
+                *stock = new_value;
             }
 
-            let result = self.stock.get(name).unwrap();
-            println!("in stock: {name} {result}");
+            count_recipe
+        } else {
+            let (count_recipe, new_stock) =
+                calc_count_recipe_and_stock(target.count, total_target_needed, 0);
+            if let Some(new_value) = new_stock {
+                self.stock.insert(target.name.clone(), new_value);
+            }
+            count_recipe
         }
     }
+}
+
+fn calc_count_recipe_and_stock(
+    count_target: i32,
+    count_needed: i32,
+    stock: i32,
+) -> (i32, Option<i32>) {
+    let mut count_recipe = count_needed / count_target;
+    let mut opt_stock = None;
+    let rest = count_needed % count_target;
+    if rest > 0 {
+        if rest <= stock {
+            opt_stock = Some(stock - rest);
+        } else {
+            count_recipe += 1;
+            opt_stock = Some(stock + count_target - rest)
+        }
+    }
+    (count_recipe, opt_stock)
+}
+
+#[test]
+fn test_1() {
+    let (count_recipe, opt_stock) = calc_count_recipe_and_stock(2, 22, 0);
+    assert_eq!(count_recipe, 11);
+    assert_eq!(opt_stock, None);
+}
+#[test]
+fn test_2() {
+    let (count_recipe, opt_stock) = calc_count_recipe_and_stock(5, 7, 0);
+    assert_eq!(count_recipe, 2);
+    assert_eq!(opt_stock, Some(3));
+}
+#[test]
+fn test_3() {
+    let (count_recipe, opt_stock) = calc_count_recipe_and_stock(5, 7, 1);
+    assert_eq!(count_recipe, 2);
+    assert_eq!(opt_stock, Some(4));
+}
+#[test]
+fn test_4() {
+    let (count_recipe, opt_stock) = calc_count_recipe_and_stock(5, 7, 4);
+    assert_eq!(count_recipe, 1);
+    assert_eq!(opt_stock, Some(2));
 }
 
 fn get_data(filename: &str) -> Option<HashMap<String, Recipe>> {
@@ -157,53 +173,4 @@ fn part_1(recipes: &HashMap<String, Recipe>) {
     let mut solver = Solver::new(recipes);
     let result = solver.solve();
     println!("part1 {result}");
-
-    return;
-
-    let mut count_oer = 0;
-    let mut targets: Vec<(&str, i32)> = Vec::new();
-    let name = "FUEL";
-    let mut stock: HashMap<&str, i32> = HashMap::new();
-    targets.push((name, 1));
-    while !targets.is_empty() {
-        let (target, target_count) = targets.remove(0);
-
-        println!("get target {target} {target_count}");
-        if let Some(recipe) = recipes.get(target) {
-            let mut count_recipe = 1;
-            let recipe_target_count = recipe.target.count;
-            while count_recipe * recipe_target_count < target_count {
-                count_recipe += 1;
-            }
-            let not_needed = count_recipe * recipe_target_count - target_count;
-            if not_needed > 0 {
-                if let Some(entry) = stock.get_mut(target) {
-                    *entry += not_needed;
-                } else {
-                    stock.insert(target, not_needed);
-                }
-                println!(">> add stock {target}");
-            }
-
-            for source in recipe.sources.iter() {
-                if source.name == NAME_ORE {
-                    count_oer += source.count * count_recipe;
-                } else {
-                    let mut count_for_this_source = count_recipe;
-                    println!(">> look {}", source.name);
-                    if let Some(entry) = stock.get_mut(source.name.as_str()) {
-                        while *entry >= source.count {
-                            *entry -= source.count;
-                            count_for_this_source -= 1;
-                        }
-                    }
-
-                    targets.push((source.name.as_str(), source.count * count_for_this_source));
-                }
-            }
-        }
-    }
-
-    println!("stock {stock:?}");
-    println!("part1 count ore: {count_oer}");
 }
