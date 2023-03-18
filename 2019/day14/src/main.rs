@@ -37,7 +37,12 @@ impl<'a> Solver<'_> {
             count_oer: 0,
         }
     }
-    fn solve(&mut self) -> i32 {
+
+    fn solve(&self) -> i32 {
+        calc_needed_ore(self.recipes, "FUEL")
+    }
+
+    fn _solve(&mut self) -> i32 {
         self.stock.clear();
         self.count_oer = 0;
         self.build("FUEL", 1);
@@ -92,6 +97,58 @@ impl<'a> Solver<'_> {
             count_recipe
         }
     }
+}
+
+fn calc_needed_ore(recipes: &HashMap<String, Recipe>, build: &str) -> i32 {
+    let mut stock: HashMap<String, i32> = HashMap::new();
+    let mut need: HashMap<String, i32> = HashMap::new();
+    need.insert(String::from(build), 1);
+    let mut ore_count = 0;
+
+    while !need.is_empty() {
+        let ele = need.keys().next().unwrap().clone();
+
+        println!("build: {ele}");
+
+        let needed_count = *need.get(&ele).unwrap();
+        let stock_count = if let Some(stock) = stock.get(&ele) {
+            *stock
+        } else {
+            0
+        };
+        if needed_count <= stock_count {
+            // enough in stock
+            need.remove(&ele);
+            stock.insert(ele, stock_count - needed_count);
+            continue;
+        }
+
+        let needed_count = needed_count - stock_count;
+
+        stock.remove(&ele);
+        need.remove(&ele);
+        if let Some(ele_recipe) = recipes.get(&ele) {
+            let recipe_count = ele_recipe.target.count;
+            let mut build_count = needed_count / recipe_count;
+            if needed_count % recipe_count > 0 {
+                build_count += 1;
+            }
+            stock.insert(ele.clone(), build_count * recipe_count - needed_count);
+            for target in ele_recipe.sources.iter() {
+                if target.name == NAME_ORE {
+                    ore_count += target.count * build_count;
+                } else {
+                    if let Some(waiting) = need.get_mut(&target.name) {
+                        *waiting += target.count * build_count;
+                    } else {
+                        need.insert(target.name.clone(), target.count * build_count);
+                    }
+                }
+            }
+        }
+    }
+
+    ore_count
 }
 
 fn calc_count_recipe_and_stock(
@@ -198,7 +255,7 @@ fn parse_lines(lines: Vec<&str>) -> Option<HashMap<String, Recipe>> {
 
 fn main() {
     println!("Hello, day14!");
-    if let Some(recipes) = get_data("./14.data") {
+    if let Some(recipes) = get_data("./14-example.data") {
         part_1(&recipes);
     }
 }
