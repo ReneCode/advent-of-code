@@ -42,7 +42,7 @@ fn calc_ore(recipes: &HashMap<String, Recipe>, fuel_count: i64) -> i64 {
     while !ingrediences.is_empty() {
         let wanted_ingredience = ingrediences.pop().unwrap();
 
-        let reserve = reserves.get(&wanted_ingredience.name).unwrap().clone();
+        let reserve = *reserves.get(&wanted_ingredience.name).unwrap();
         if wanted_ingredience.count <= reserve {
             reserves.insert(wanted_ingredience.name, reserve - wanted_ingredience.count);
         } else {
