@@ -41,17 +41,13 @@ fn calc_ore(recipes: &HashMap<String, Recipe>) -> i32 {
     let mut ore_count = 0;
     while !ingrediences.is_empty() {
         let wanted_ingredience = ingrediences.pop().unwrap();
-        println!(
-            "want: {} {}",
-            wanted_ingredience.count, wanted_ingredience.name
-        );
 
         let reserve = reserves.get(&wanted_ingredience.name).unwrap().clone();
         if wanted_ingredience.count <= reserve {
             reserves.insert(wanted_ingredience.name, reserve - wanted_ingredience.count);
         } else {
             // build new ingredience
-            // take all from reserve
+            // take all from reserve !!
             reserves.insert(wanted_ingredience.name.clone(), 0);
             let wanted_count = wanted_ingredience.count - reserve;
 
@@ -67,6 +63,7 @@ fn calc_ore(recipes: &HashMap<String, Recipe>) -> i32 {
                 if sub_ingredience.name == NAME_ORE {
                     ore_count += build_count * sub_ingredience.count
                 } else {
+                    // some optimization - add count for wanted future_ingredience
                     if let Some(future_ingredience) = ingrediences
                         .iter_mut()
                         .find(|i| i.name == sub_ingredience.name)
