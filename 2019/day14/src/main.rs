@@ -1,12 +1,21 @@
 use util::io;
 
-use std::{collections::HashMap, convert::From};
+use std::{
+    collections::{HashMap, VecDeque},
+    convert::From,
+};
 
 const NAME_ORE: &str = "ORE";
 
 struct CountName {
     count: i32,
     name: String,
+}
+
+impl CountName {
+    fn new(name: String, count: i32) -> Self {
+        CountName { count, name }
+    }
 }
 
 impl From<&str> for CountName {
@@ -39,66 +48,77 @@ impl<'a> Solver<'_> {
     }
 
     fn solve(&self) -> i32 {
-        calc_needed_ore(self.recipes, "FUEL")
+        calc_ore(self.recipes)
+        // calc_needed_ore(self.recipes, "FUEL")
+    }
+}
+
+fn calc_ore(recipes: &HashMap<String, Recipe>) -> i32 {
+    let mut ingrediences: VecDeque<CountName> = VecDeque::new();
+    ingrediences.push_back(CountName::new(String::from("FUEL"), 1));
+
+    let mut reserves: HashMap<String, i32> = HashMap::new();
+    for name in recipes.keys() {
+        reserves.insert(name.clone(), 0);
     }
 
-    fn _solve(&mut self) -> i32 {
-        self.stock.clear();
-        self.count_oer = 0;
-        self.build("FUEL", 1);
-        let stock = &self.stock;
-        println!("stock {stock:?}");
+    let mut ore_count = 0;
+    while !ingrediences.is_empty() {
+        let wanted_ingredience = ingrediences.pop_front().unwrap();
+        println!(
+            "want: {} {}",
+            wanted_ingredience.count, wanted_ingredience.name
+        );
 
-        self.count_oer
-    }
+        let reserve = reserves.get(&wanted_ingredience.name).unwrap().clone();
+        if wanted_ingredience.count <= reserve {
+            reserves.insert(wanted_ingredience.name, reserve - wanted_ingredience.count);
+        } else {
+            // build new ingredience
+            // take all from reserve
+            reserves.insert(wanted_ingredience.name.clone(), 0);
+            let wanted_count = wanted_ingredience.count - reserve;
 
-    fn build(&mut self, name: &str, count: i32) {
-        println!("build {count} {name}");
-        if let Some(recipe) = self.recipes.get(name) {
-            let count_recipe = self.calc_count_recipe(&recipe.target, count);
+            let receipe = recipes.get(&wanted_ingredience.name).unwrap();
+            let build_count = have_to_build(wanted_count, receipe.target.count);
 
-            for source in recipe.sources.iter() {
-                if source.name == NAME_ORE {
-                    let count_oer = source.count * count_recipe;
-                    println!("need oer {count_oer}");
-                    self.count_oer += source.count * count_recipe;
+            let left_over = build_count * receipe.target.count - wanted_count;
+            if left_over > 0 {
+                reserves.insert(wanted_ingredience.name.clone(), left_over);
+            }
+
+            for sub_ingredience in receipe.sources.iter() {
+                if sub_ingredience.name == NAME_ORE {
+                    ore_count += build_count * sub_ingredience.count
                 } else {
-                    let mut count_source = count_recipe;
-                    if let Some(entry) = self.stock.get_mut(source.name.as_str()) {
-                        while *entry >= source.count {
-                            *entry -= source.count;
-                            count_source -= 1;
-                        }
-                    }
-                    if count_source > 0 {
-                        self.build(source.name.as_str(), source.count * count_source);
+                    if let Some(future_ingredience) = ingrediences
+                        .iter_mut()
+                        .find(|i| i.name == sub_ingredience.name)
+                    {
+                        future_ingredience.count += build_count * sub_ingredience.count;
+                    } else {
+                        ingrediences.push_back(CountName::new(
+                            sub_ingredience.name.clone(),
+                            build_count * sub_ingredience.count,
+                        ));
                     }
                 }
             }
         }
     }
 
-    fn calc_count_recipe(&mut self, target: &CountName, total_target_needed: i32) -> i32 {
-        if let Some(stock) = self.stock.get_mut(target.name.as_str()) {
-            let (count_recipe, new_stock) =
-                calc_count_recipe_and_stock(target.count, total_target_needed, *stock);
-
-            if let Some(new_value) = new_stock {
-                *stock = new_value;
-            }
-
-            count_recipe
-        } else {
-            let (count_recipe, new_stock) =
-                calc_count_recipe_and_stock(target.count, total_target_needed, 0);
-            if let Some(new_value) = new_stock {
-                self.stock.insert(target.name.clone(), new_value);
-            }
-            count_recipe
-        }
-    }
+    ore_count
 }
 
+fn have_to_build(need_total: i32, package_count: i32) -> i32 {
+    let mut build = need_total / package_count;
+    if need_total % package_count > 0 {
+        build += 1;
+    }
+    build
+}
+
+// copy from https://0xdf.gitlab.io/adventofcode2019/14
 fn calc_needed_ore(recipes: &HashMap<String, Recipe>, build: &str) -> i32 {
     let mut stock: HashMap<String, i32> = HashMap::new();
     let mut need: HashMap<String, i32> = HashMap::new();
@@ -108,14 +128,15 @@ fn calc_needed_ore(recipes: &HashMap<String, Recipe>, build: &str) -> i32 {
     while !need.is_empty() {
         let ele = need.keys().next().unwrap().clone();
 
-        println!("build: {ele}");
-
         let needed_count = *need.get(&ele).unwrap();
         let stock_count = if let Some(stock) = stock.get(&ele) {
             *stock
         } else {
             0
         };
+
+        println!("build: {needed_count} {ele}");
+
         if needed_count <= stock_count {
             // enough in stock
             need.remove(&ele);
@@ -255,7 +276,7 @@ fn parse_lines(lines: Vec<&str>) -> Option<HashMap<String, Recipe>> {
 
 fn main() {
     println!("Hello, day14!");
-    if let Some(recipes) = get_data("./14-example.data") {
+    if let Some(recipes) = get_data("./14.data") {
         part_1(&recipes);
     }
 }
