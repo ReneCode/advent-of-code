@@ -5,12 +5,12 @@ use std::{collections::HashMap, convert::From};
 const NAME_ORE: &str = "ORE";
 
 struct CountName {
-    count: i32,
+    count: i64,
     name: String,
 }
 
 impl CountName {
-    fn new(name: String, count: i32) -> Self {
+    fn new(name: String, count: i64) -> Self {
         CountName { count, name }
     }
 }
@@ -18,7 +18,7 @@ impl CountName {
 impl From<&str> for CountName {
     fn from(line: &str) -> Self {
         let token: Vec<&str> = line.trim().split(' ').collect();
-        let count = token[0].parse::<i32>().unwrap();
+        let count = token[0].parse::<i64>().unwrap();
         let name = String::from(token[1]);
         CountName { count, name }
     }
@@ -29,16 +29,16 @@ struct Recipe {
     target: CountName,
 }
 
-fn calc_ore(recipes: &HashMap<String, Recipe>) -> i32 {
+fn calc_ore(recipes: &HashMap<String, Recipe>, fuel_count: i64) -> i64 {
     let mut ingrediences: Vec<CountName> = Vec::new();
-    ingrediences.push(CountName::new(String::from("FUEL"), 1));
+    ingrediences.push(CountName::new(String::from("FUEL"), fuel_count));
 
-    let mut reserves: HashMap<String, i32> = HashMap::new();
+    let mut reserves: HashMap<String, i64> = HashMap::new();
     for name in recipes.keys() {
         reserves.insert(name.clone(), 0);
     }
 
-    let mut ore_count = 0;
+    let mut ore_count: i64 = 0;
     while !ingrediences.is_empty() {
         let wanted_ingredience = ingrediences.pop().unwrap();
 
@@ -83,7 +83,7 @@ fn calc_ore(recipes: &HashMap<String, Recipe>) -> i32 {
     ore_count
 }
 
-fn have_to_build(need_total: i32, package_count: i32) -> i32 {
+fn have_to_build(need_total: i64, package_count: i64) -> i64 {
     let mut build = need_total / package_count;
     if need_total % package_count > 0 {
         build += 1;
@@ -124,12 +124,39 @@ fn main() {
     println!("Hello, day14!");
     if let Some(recipes) = get_data("./14.data") {
         part_1(&recipes);
+        part_2(&recipes);
     }
 }
 
 fn part_1(recipes: &HashMap<String, Recipe>) {
-    let result = calc_ore(recipes);
+    let result = calc_ore(recipes, 1);
     println!("part1 {result}");
+}
+
+fn part_2(recipes: &HashMap<String, Recipe>) {
+    let mut fuel_count = 1;
+    let mut last_fuel_count = 1;
+    let mut fuel_delta = 1;
+    let result = loop {
+        let ore_count = calc_ore(recipes, fuel_count);
+        // println!("{ore_count} ore => {fuel_count} fuel ");
+        if ore_count > 1000000000000 {
+            if fuel_delta == 1 {
+                break last_fuel_count;
+            } else {
+                // ups, too high.
+                // continue with last ok and tiny delta
+                fuel_delta = 1;
+                fuel_count = last_fuel_count + fuel_delta;
+                continue;
+            }
+        }
+        last_fuel_count = fuel_count;
+
+        fuel_count += fuel_delta;
+        fuel_delta *= 2;
+    };
+    println!("part2 {result}")
 }
 
 #[test]
@@ -142,7 +169,7 @@ fn test_p1_1() {
     7 A, 1 E => 1 FUEL"#;
     let lines: Vec<&str> = input.split('\n').collect();
     let recipes = parse_lines(lines).unwrap();
-    assert_eq!(calc_ore(&recipes), 31);
+    assert_eq!(calc_ore(&recipes, 1), 31);
 }
 
 #[test]
@@ -156,7 +183,7 @@ fn test_p1_2() {
     2 AB, 3 BC, 4 CA => 1 FUEL"#;
     let lines: Vec<&str> = input.split('\n').collect();
     let recipes = parse_lines(lines).unwrap();
-    assert_eq!(calc_ore(&recipes), 165);
+    assert_eq!(calc_ore(&recipes, 1), 165);
 }
 
 #[test]
@@ -172,7 +199,7 @@ fn test_p1_3() {
     3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT"#;
     let lines: Vec<&str> = input.split('\n').collect();
     let recipes = parse_lines(lines).unwrap();
-    assert_eq!(calc_ore(&recipes), 13312);
+    assert_eq!(calc_ore(&recipes, 1), 13312);
 }
 
 #[test]
@@ -191,7 +218,7 @@ fn test_p1_4() {
     176 ORE => 6 VJHF"#;
     let lines: Vec<&str> = input.split('\n').collect();
     let recipes = parse_lines(lines).unwrap();
-    assert_eq!(calc_ore(&recipes), 180697);
+    assert_eq!(calc_ore(&recipes, 1), 180697);
 }
 
 #[test]
@@ -215,5 +242,5 @@ fn test_p1_5() {
     5 BHXH, 4 VRPVC => 5 LTCX"#;
     let lines: Vec<&str> = input.split('\n').collect();
     let recipes = parse_lines(lines).unwrap();
-    assert_eq!(calc_ore(&recipes), 2210736);
+    assert_eq!(calc_ore(&recipes, 1), 2210736);
 }
