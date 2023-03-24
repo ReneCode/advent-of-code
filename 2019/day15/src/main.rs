@@ -31,7 +31,7 @@ const TILE_WALL: char = '#';
 const TILE_FREE: char = '.';
 const TILE_DROID: char = 'D';
 const TILE_UNEXPLORED: char = ' ';
-const TILE_OXYGEN: char = '*';
+const TILE_OXYGEN: char = 'O';
 
 #[derive(Debug)]
 enum StepResult {
@@ -308,6 +308,9 @@ impl IntComputer {
 struct RepairDroid {
     tiles: HashMap<Point, char>,
     last_positions: Vec<Point>,
+    steps_to_oxygen: i32,
+    stop_at_oxygen: bool,
+    fill_minutes: i32,
 }
 
 impl RepairDroid {
@@ -315,6 +318,9 @@ impl RepairDroid {
         let mut droid = RepairDroid {
             tiles: HashMap::new(),
             last_positions: Vec::new(),
+            steps_to_oxygen: 0,
+            stop_at_oxygen: false,
+            fill_minutes: 0,
         };
         let start_point = Point::new(0, 0);
         droid.tiles.insert(start_point.clone(), TILE_FREE);
@@ -327,7 +333,7 @@ impl RepairDroid {
         for (point, _pos_type) in self.tiles.iter() {
             bounding_box.add(point);
         }
-        println!();
+        // println!();
         for y in bounding_box.y_min..=bounding_box.y_max {
             let mut line = String::new();
             for x in bounding_box.x_min..=bounding_box.x_max {
@@ -345,7 +351,7 @@ impl RepairDroid {
                     }
                 }
             }
-            println!("{}", line);
+            // println!("{}", line);
         }
     }
 
@@ -358,24 +364,45 @@ impl RepairDroid {
         }
     }
 
-    fn get_unexplored_neighbour(&self, pt: &Point) -> Option<(Point, i64)> {
-        if self.get_tile(pt.x + 1, pt.y) == TILE_UNEXPLORED {
-            return Some((Point::new(pt.x + 1, pt.y), MOVE_EAST));
-        }
-        if self.get_tile(pt.x - 1, pt.y) == TILE_UNEXPLORED {
-            return Some((Point::new(pt.x - 1, pt.y), MOVE_WEST));
-        }
-        if self.get_tile(pt.x, pt.y + 1) == TILE_UNEXPLORED {
-            return Some((Point::new(pt.x, pt.y + 1), MOVE_NORTH));
-        }
-        if self.get_tile(pt.x, pt.y - 1) == TILE_UNEXPLORED {
-            return Some((Point::new(pt.x, pt.y - 1), MOVE_SOUTH));
-        }
+    fn get_all_neighbours(&self, pt: &Point) -> Vec<(Point, i64)> {
+        vec![
+            (Point::new(pt.x + 1, pt.y), MOVE_EAST),
+            (Point::new(pt.x - 1, pt.y), MOVE_WEST),
+            (Point::new(pt.x, pt.y + 1), MOVE_NORTH),
+            (Point::new(pt.x, pt.y - 1), MOVE_SOUTH),
+        ]
+    }
 
+    fn get_unexplored_neighbour(&self, pt: &Point) -> Option<(Point, i64)> {
+        for (pt, mov) in self.get_all_neighbours(pt) {
+            if self.get_tile(pt.x, pt.y) == TILE_UNEXPLORED {
+                return Some((pt, mov));
+            }
+        }
         None
     }
 
-    fn get_unexplored_points() {}
+    fn flood_fill(&mut self, pt: &Point, minute: i32) {
+        for (pt, _mov) in self.get_all_neighbours(pt) {
+            if self.get_tile(pt.x, pt.y) == TILE_FREE {
+                self.tiles.insert(pt.clone(), TILE_OXYGEN);
+                // continue filling the area, in next minute
+                self.flood_fill(&pt, minute + 1);
+                self.fill_minutes = self.fill_minutes.max(minute + 1)
+            }
+        }
+    }
+
+    fn fill_with_oxygen(&mut self) {
+        let mut start_point = Point::new(0, 0);
+        for (key, tile) in self.tiles.iter() {
+            if *tile == TILE_OXYGEN {
+                start_point = key.clone();
+            }
+        }
+        self.fill_minutes = 0;
+        self.flood_fill(&start_point, 0);
+    }
 }
 
 impl TakeInputOutput for RepairDroid {
@@ -389,6 +416,10 @@ impl TakeInputOutput for RepairDroid {
                     return next_move;
                 } else {
                     // leave that pt
+                    if self.last_positions.len() == 1 {
+                        return -1;
+                    }
+
                     let cur_pt = pt.clone();
                     let _ = self.last_positions.pop().unwrap();
                     let prev_pt = self.last_positions.last().unwrap();
@@ -423,7 +454,11 @@ impl TakeInputOutput for RepairDroid {
             STATUS_FOUND_OXYGEN_SYSTEM => {
                 let last_pos = self.last_positions.last().unwrap();
                 self.tiles.insert(last_pos.clone(), TILE_OXYGEN);
-                return true;
+                // do not count the starting point
+                self.steps_to_oxygen = self.last_positions.len() as i32 - 1;
+                if self.stop_at_oxygen {
+                    return true;
+                }
             }
             _ => {}
         }
@@ -459,11 +494,19 @@ fn create_program(line: &str) -> Program {
 fn part_1(line: &str) {
     let mut computer = IntComputer::new(line);
     let mut repair_droid = RepairDroid::new();
+    repair_droid.stop_at_oxygen = true;
     computer.run(&mut repair_droid);
-    // -1 because of do not count the start-point
-    println!("part1 steps:{}", repair_droid.last_positions.len() - 1);
+    println!("part1 steps:{}", repair_droid.steps_to_oxygen);
 }
 
 fn part_2(line: &str) {
-    let amp = IntComputer::new(line);
+    let mut computer = IntComputer::new(line);
+    let mut repair_droid = RepairDroid::new();
+    // create complete map - do not stop on oxygen
+    computer.run(&mut repair_droid);
+
+    repair_droid.fill_with_oxygen();
+    println!("part2 minutes: {}", repair_droid.fill_minutes);
+
+    // let area = repair_droid.tiles;
 }
