@@ -58,7 +58,7 @@ enum Instruction {
 }
 
 pub struct IntComputer {
-    programm: Program,
+    program: Program,
     address: usize,
     relative_base: usize,
 }
@@ -164,7 +164,7 @@ impl DemoDevice {
 impl IntComputer {
     pub fn new(line: &str) -> Self {
         IntComputer {
-            programm: create_program(line),
+            program: create_program(line),
             address: 0,
             relative_base: 0,
         }
@@ -181,8 +181,12 @@ impl IntComputer {
         }
     }
 
+    pub fn change_program(&mut self, adress: usize, val: i64) {
+        self.program[adress] = val;
+    }
+
     fn read(&mut self) -> i64 {
-        let code = self.programm[self.address];
+        let code = self.program[self.address];
         self.address += 1;
         code
     }
@@ -243,12 +247,12 @@ impl IntComputer {
             Parameter::Position(address) => {
                 let adr = *address as usize;
                 self.resize_if_necessary(adr);
-                return self.programm[adr];
+                return self.program[adr];
             }
             Parameter::Relative(address) => {
                 let adr = (*address as i64 + self.relative_base as i64) as usize;
                 self.resize_if_necessary(adr);
-                return self.programm[adr];
+                return self.program[adr];
             }
         };
     }
@@ -261,19 +265,19 @@ impl IntComputer {
             Parameter::Position(address) => {
                 let adr = *address as usize;
                 self.resize_if_necessary(adr);
-                self.programm[adr] = value
+                self.program[adr] = value
             }
             Parameter::Relative(address) => {
                 let adr = (*address as i64 + self.relative_base as i64) as usize;
                 self.resize_if_necessary(adr);
-                self.programm[adr] = value
+                self.program[adr] = value
             }
         }
     }
 
     fn resize_if_necessary(&mut self, address: usize) {
-        if address >= self.programm.len() {
-            self.programm.resize(address + 1, 0);
+        if address >= self.program.len() {
+            self.program.resize(address + 1, 0);
         }
     }
 }
