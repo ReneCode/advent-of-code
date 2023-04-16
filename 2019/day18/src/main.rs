@@ -93,26 +93,39 @@ impl Board {
         panic!("me not found")
     }
 
-    fn find_connections(&self, connections: &mut Vec<Connection>, way: Way) {
-        let me = way.last_point();
+    fn find_connections(&self, connections: &mut Vec<Connection>, way: &mut Way) {
+        let me = way.last_point().clone();
 
-        let cell = self.cells.get(me).unwrap();
+        let cell = self.cells.get(&me).unwrap();
         if is_key(*cell) {
+            way.add_key(*cell);
+
             let start = way.first_point();
             let end = me;
-            let connection = Connection::new(start, end, way.len(), *cell);
+            let connection = Connection::new(*start, end, way.len(), *cell);
             connections.push(connection);
         } else {
             let neigbours: Vec<Point> = self
-                .get_neigbours(me)
+                .get_neigbours(&me)
                 .iter()
                 .filter(|pt| !way.contains_point(pt))
                 .map(|pt| *pt)
                 .collect();
-            for pt in neigbours {
-                let mut new_way = way.clone();
-                new_way.add_point(pt);
-                self.find_connections(connections, new_way);
+            if neigbours.len() == 1 {
+                let pt = neigbours[0];
+                way.add_point(pt);
+                self.find_connections(connections, way);
+            } else {
+                for (idx, pt) in neigbours.iter().enumerate() {
+                    if (idx == 0) {
+                        way.add_point(*pt);
+                        self.find_connections(connections, way);
+                    } else {
+                        let mut new_way = way.clone();
+                        new_way.add_point(*pt);
+                        self.find_connections(connections, &mut new_way);
+                    }
+                }
             }
         }
     }
@@ -176,10 +189,10 @@ struct Connection {
     key: char,
 }
 impl Connection {
-    fn new(start: &Point, end: &Point, len: usize, key: char) -> Self {
+    fn new(start: Point, end: Point, len: usize, key: char) -> Self {
         Connection {
-            start: start.clone(),
-            end: end.clone(),
+            start,
+            end,
             len,
             key,
         }
@@ -188,21 +201,14 @@ impl Connection {
 
 fn part_1(lines: &Vec<String>) {
     let mut board = Board::new(lines);
-    let mut me = board.remove_me();
-
-    let mut ways: Vec<Way> = Vec::new();
+    let me = board.remove_me();
 
     let mut way = Way::new();
     way.add_point(me);
 
     let mut connections: Vec<Connection> = Vec::new();
 
-    board.find_connections(&mut connections, way);
-    // for way in ways {
-    //     let connection = Connection {
-    //         start:
-    //     }
-    // }
+    board.find_connections(&mut connections, &mut way);
 
     println!("{:?}", connections);
 }
