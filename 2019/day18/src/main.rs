@@ -139,65 +139,77 @@ impl Board {
     // }
 }
 
-#[derive(clone)]
+#[derive(Clone, Debug)]
 struct Way {
     keys: Vec<char>,
-    coords: Vec<Coord>,
+    all_coords: Vec<Coord>,
+    last_coords: Vec<Coord>,
     steps: usize,
 }
 impl Way {
     fn new() -> Self {
         Way {
             keys: Vec::new(),
-            coords: Vec::new(),
+            all_coords: Vec::new(),
+            last_coords: Vec::new(),
             steps: 0,
         }
     }
 
-    fn add(coord: &Coord, c: char) {}
+    fn last_coord(&self) -> Coord {
+        self.last_coords[self.last_coords.len() - 1]
+    }
+
+    fn add_coord(&mut self, coord: Coord) {
+        self.steps += 1;
+        self.all_coords.push(coord);
+        self.last_coords.push(coord);
+    }
+    fn add_key(&mut self, c: char) {
+        self.keys.push(c);
+        let last_coord = self.last_coord();
+        self.last_coords.clear();
+        self.last_coords.push(last_coord);
+    }
+
+    fn contains_coord(&self, coord: &Coord) -> bool {
+        self.last_coords.contains(coord)
+    }
 }
 
-fn find_way(board: &mut Board, way: &mut Vec<Coord>) {
-    let last_coord = way[way.len() - 1];
+fn find_way(board: &mut Board, way: &mut Way, results: &mut Vec<usize>) {
+    let last_coord = way.last_coord();
     let val = board.cells[last_coord.1][last_coord.0];
 
     if is_key(val) {
-        print!("({val})");
+        way.add_key(val);
         board.remove(val);
         let door = door_from_key(val);
         board.remove(door);
-        way.clear();
-        way.push(last_coord);
 
         if board.count_keys() == 0 {
-            println!(" finished all keys collected {:?} {}", way, board.steps)
+            // println!(" finished all keys collected {:?}", way);
+            results.push(way.steps - 1);
+            return;
         }
     }
 
     let neighbours: Vec<Coord> = board
         .get_neigbours(&last_coord)
         .iter()
-        .filter(|coord| !way.contains(coord))
+        .filter(|coord| !way.contains_coord(coord))
         .map(|coord| *coord)
         .collect();
 
-    if neighbours.len() == 0 {
-        println!(" can't go on.")
-    }
+    // if neighbours.len() == 0 {
+    //     println!(" can't go on.")
+    // }
 
     for (idx, coord) in neighbours.iter().enumerate() {
-        if idx == 0 {
-            way.push(*coord);
-            board.steps += 1;
-            find_way(board, way)
-        } else {
-            let mut new_way = way.clone();
-            new_way.push(*coord);
-            board.steps += 1;
-            let mut new_board = board.clone();
-            println!();
-            find_way(&mut new_board, &mut new_way);
-        }
+        let mut new_way = way.clone();
+        new_way.add_coord(*coord);
+        let mut new_board = board.clone();
+        find_way(&mut new_board, &mut new_way, results);
     }
 }
 
@@ -205,9 +217,11 @@ fn part_1(lines: &Vec<String>) {
     let mut board = Board::new(lines);
     let start: Coord = board.remove(CELL_ME);
 
-    let mut way: Vec<Coord> = Vec::new();
-    way.push(start);
-    find_way(&mut board, &mut way);
+    let mut way = Way::new();
+    way.add_coord(start);
 
-    // println!("{:?}", connections);
+    let mut results: Vec<usize> = Vec::new();
+    find_way(&mut board, &mut way, &mut results);
+
+    println!("{:?}", results);
 }
