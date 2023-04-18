@@ -1,3 +1,5 @@
+use std::collections::{HashMap, VecDeque};
+
 use util::io;
 use util::point::Point;
 
@@ -17,11 +19,12 @@ fn is_door(c: char) -> bool {
 fn is_wall(c: char) -> bool {
     c == CELL_WALL
 }
-fn door_from_key(c: char) -> char {
+fn door_from_key(c: char) -> Option<char> {
     if !is_key(c) {
-        panic!("no key")
+        None
+    } else {
+        Some(c.to_ascii_uppercase())
     }
-    c.to_ascii_uppercase()
 }
 
 fn main() {
@@ -70,6 +73,14 @@ impl Board {
         count
     }
 
+    fn get_cell(&self, coord: &Coord) -> char {
+        self.cells[coord.1][coord.0]
+    }
+
+    fn set_cell(&mut self, coord: &Coord, val: char) {
+        self.cells[coord.1][coord.0] = val;
+    }
+
     fn get_neigbours(&self, coord: &Coord) -> Vec<Coord> {
         let other: Vec<Coord> = vec![
             (coord.0, coord.1 - 1),
@@ -100,128 +111,79 @@ impl Board {
         }
         (0, 0)
     }
-
-    // fn find_connections(&self, connections: &mut Vec<Connection>, way: &mut Way) {
-    //     let me = way.last_point().clone();
-
-    //     let cell = self.cells.get(&me).unwrap();
-    //     if is_key(*cell) {
-    //         way.add_key(*cell);
-
-    //         let start = way.first_point();
-    //         let end = me;
-    //         let connection = Connection::new(*start, end, way.len(), *cell);
-    //         connections.push(connection);
-    //     } else {
-    //         let neigbours: Vec<Point> = self
-    //             .get_neigbours(&me)
-    //             .iter()
-    //             .filter(|pt| !way.contains_point(pt))
-    //             .map(|pt| *pt)
-    //             .collect();
-    //         if neigbours.len() == 1 {
-    //             let pt = neigbours[0];
-    //             way.add_point(pt);
-    //             self.find_connections(connections, way);
-    //         } else {
-    //             for (idx, pt) in neigbours.iter().enumerate() {
-    //                 if (idx == 0) {
-    //                     way.add_point(*pt);
-    //                     self.find_connections(connections, way);
-    //                 } else {
-    //                     let mut new_way = way.clone();
-    //                     new_way.add_point(*pt);
-    //                     self.find_connections(connections, &mut new_way);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 }
 
-#[derive(Clone, Debug)]
-struct Way {
-    keys: Vec<char>,
-    all_coords: Vec<Coord>,
-    last_coords: Vec<Coord>,
-    steps: usize,
-}
-impl Way {
-    fn new() -> Self {
-        Way {
-            keys: Vec::new(),
-            all_coords: Vec::new(),
-            last_coords: Vec::new(),
-            steps: 0,
-        }
-    }
-
-    fn last_coord(&self) -> Coord {
-        self.last_coords[self.last_coords.len() - 1]
-    }
-
-    fn add_coord(&mut self, coord: Coord) {
-        self.steps += 1;
-        self.all_coords.push(coord);
-        self.last_coords.push(coord);
-    }
-    fn add_key(&mut self, c: char) {
-        self.keys.push(c);
-        let last_coord = self.last_coord();
-        self.last_coords.clear();
-        self.last_coords.push(last_coord);
-    }
-
-    fn contains_coord(&self, coord: &Coord) -> bool {
-        self.last_coords.contains(coord)
-    }
-}
-
-fn find_way(board: &mut Board, way: &mut Way, results: &mut Vec<usize>) {
-    let last_coord = way.last_coord();
-    let val = board.cells[last_coord.1][last_coord.0];
-
+fn find_keys(board: &mut Board, start: &Coord, len: usize, result: &mut HashMap<char, usize>) {
+    let val = board.get_cell(start);
     if is_key(val) {
-        way.add_key(val);
-        board.remove(val);
-        let door = door_from_key(val);
-        board.remove(door);
-
-        if board.count_keys() == 0 {
-            // println!(" finished all keys collected {:?}", way);
-            results.push(way.steps - 1);
-            return;
-        }
+        result.insert(val, len);
+        return;
     }
+
+    board.set_cell(start, CELL_ME);
 
     let neighbours: Vec<Coord> = board
-        .get_neigbours(&last_coord)
+        .get_neigbours(&start)
         .iter()
-        .filter(|coord| !way.contains_coord(coord))
+        .filter(|coord| {
+            let val = board.get_cell(coord);
+            val == CELL_FREE || is_key(val)
+        })
         .map(|coord| *coord)
         .collect();
 
-    // if neighbours.len() == 0 {
-    //     println!(" can't go on.")
-    // }
-
-    for (idx, coord) in neighbours.iter().enumerate() {
-        let mut new_way = way.clone();
-        new_way.add_coord(*coord);
-        let mut new_board = board.clone();
-        find_way(&mut new_board, &mut new_way, results);
+    for coord in neighbours {
+        find_keys(board, &coord, len + 1, result)
     }
 }
 
-fn part_1(lines: &Vec<String>) {
+fn get_connections(lines: &Vec<String>, start: char, visited: &str) -> HashMap<char, usize> {
     let mut board = Board::new(lines);
-    let start: Coord = board.remove(CELL_ME);
+    for visited_key in visited.chars() {
+        board.remove(visited_key);
+        if let Some(door) = door_from_key(visited_key) {
+            board.remove(door);
+        }
+    }
+    if let Some(door) = door_from_key(start) {
+        board.remove(door);
+    }
+    let start_coord: Coord = board.remove(start);
 
-    let mut way = Way::new();
-    way.add_coord(start);
+    let mut results: HashMap<char, usize> = HashMap::new();
+    find_keys(&mut board, &start_coord, 0, &mut results);
+    results
+}
 
-    let mut results: Vec<usize> = Vec::new();
-    find_way(&mut board, &mut way, &mut results);
+#[derive(Debug)]
+struct ConnectionNode {
+    start: char,
+    end: char,
+    len: usize,
+}
 
-    println!("{:?}", results);
+fn part_1(lines: &Vec<String>) {
+    let mut connections: Vec<ConnectionNode> = Vec::new();
+    let mut keys_list: VecDeque<(String, usize)> = VecDeque::new();
+    keys_list.push_back((String::from(CELL_ME), 0));
+
+    while keys_list.len() > 0 {
+        let (keys, prev_len) = keys_list.pop_front().unwrap();
+
+        let start = keys.chars().nth(keys.len() - 1).unwrap();
+        let visited = &keys[0..keys.len() - 1];
+        let results = get_connections(lines, start, visited);
+        if results.len() == 0 {
+            break;
+        }
+        for (end, len) in results {
+            let node = ConnectionNode { start, end, len };
+            connections.push(node);
+
+            let mut new_keys = keys.clone();
+            new_keys.push(end);
+            println!("{new_keys}  {}", prev_len + len);
+            keys_list.push_back((new_keys, prev_len + len));
+        }
+    }
 }
