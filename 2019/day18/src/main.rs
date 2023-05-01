@@ -30,7 +30,7 @@ fn door_from_key(c: char) -> Option<char> {
 fn main() {
     println!("Hello, day18!");
 
-    if let Some(lines) = io::get_lines("18-example.data") {
+    if let Some(lines) = io::get_lines("18.data") {
         part_1(&lines);
     }
 }
@@ -117,7 +117,8 @@ fn find_keys(board: &mut Board, start: &Coord, len: usize, result: &mut HashMap<
     let val = board.get_cell(start);
     if is_key(val) {
         result.insert(val, len);
-        return;
+        // continue finding
+        // look also behind a found key
     }
 
     board.set_cell(start, CELL_ME);
@@ -156,16 +157,45 @@ fn get_connections(lines: &Vec<String>, start: char, visited: &str) -> HashMap<c
 }
 
 #[derive(Debug)]
-struct ConnectionNode {
-    start: char,
-    end: char,
-    len: usize,
+struct Ways {
+    way_lengths: HashMap<String, usize>,
+}
+
+impl Ways {
+    fn new() -> Self {
+        Ways {
+            way_lengths: HashMap::new(),
+        }
+    }
+
+    fn is_new_or_better(&mut self, keys: &String, end_key: char, len: usize) -> bool {
+        let mut way: Vec<char> = keys.chars().collect();
+        way.sort();
+        way.push(end_key);
+        let cache_key = String::from_iter(way.iter());
+        if let Some(len_of_way) = self.way_lengths.get_mut(&cache_key) {
+            if len < *len_of_way {
+                *len_of_way = len;
+                true
+            } else {
+                // println!("remove {cache_key}");
+                // same way, but not better
+                false
+            }
+        } else {
+            self.way_lengths.insert(cache_key, len);
+            true
+        }
+    }
 }
 
 fn part_1(lines: &Vec<String>) {
-    let mut connections: Vec<ConnectionNode> = Vec::new();
     let mut keys_list: VecDeque<(String, usize)> = VecDeque::new();
     keys_list.push_back((String::from(CELL_ME), 0));
+    let mut ways = Ways::new();
+
+    let mut best_len = usize::MAX;
+    let mut best_way = String::new();
 
     while keys_list.len() > 0 {
         let (keys, prev_len) = keys_list.pop_front().unwrap();
@@ -174,16 +204,23 @@ fn part_1(lines: &Vec<String>) {
         let visited = &keys[0..keys.len() - 1];
         let results = get_connections(lines, start, visited);
         if results.len() == 0 {
-            break;
+            println!("finished {visited} {prev_len}");
+            if prev_len < best_len {
+                best_len = prev_len;
+                best_way = String::from(visited)
+            }
+            // break;
         }
         for (end, len) in results {
-            let node = ConnectionNode { start, end, len };
-            connections.push(node);
-
-            let mut new_keys = keys.clone();
-            new_keys.push(end);
-            println!("{new_keys}  {}", prev_len + len);
-            keys_list.push_back((new_keys, prev_len + len));
+            let complete_len = prev_len + len;
+            if ways.is_new_or_better(&keys, end, complete_len) {
+                let mut new_keys = keys.clone();
+                new_keys.push(end);
+                println!("{new_keys}  {}", complete_len);
+                keys_list.push_back((new_keys, complete_len));
+            }
         }
     }
+
+    println!("best way: {best_way} -> {best_len}")
 }
