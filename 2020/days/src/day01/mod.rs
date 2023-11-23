@@ -13,17 +13,32 @@ pub fn day01() {
         .collect();
     // println!("numbers {:?}", numbers);
 
-    if let Some(result) = solve(numbers) {
-        println!("result: {result}")
+    if let Some(result) = solve_a(&numbers) {
+        println!("result A: {result}")
+    }
+
+    if let Some(result) = solve_b(&numbers) {
+        println!("result B: {result}")
     }
 }
 
-fn solve(numbers: Vec<i32>) -> Option<i32> {
+fn solve_a(numbers: &Vec<i32>) -> Option<i32> {
     let comb = numbers.iter().combinations(2);
 
     for c in comb {
         if c[0] + c[1] == 2020 {
             return Some(c[0] * c[1]);
+        }
+    }
+    None
+}
+
+fn solve_b(numbers: &Vec<i32>) -> Option<i32> {
+    let comb = numbers.iter().combinations(3);
+
+    for c in comb {
+        if c[0] + c[1] + c[2] == 2020 {
+            return Some(c[0] * c[1] * c[2]);
         }
     }
     None
