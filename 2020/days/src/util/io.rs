@@ -12,7 +12,7 @@ pub fn read_lines(filename: &str) -> Option<Vec<String>> {
     let reader = io::BufReader::new(file);
 
     let r: Vec<String> = reader.lines().map(|line| line.unwrap()).collect();
-    return Some(r);
+    Some(r)
 
     // let mut result = Vec::new();
     // for line in reader.lines() {

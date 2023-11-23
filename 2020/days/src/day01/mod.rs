@@ -22,7 +22,7 @@ pub fn day01() {
     }
 }
 
-fn solve_a(numbers: &Vec<i32>) -> Option<i32> {
+fn solve_a(numbers: &[i32]) -> Option<i32> {
     let comb = numbers.iter().combinations(2);
 
     for c in comb {
@@ -33,7 +33,7 @@ fn solve_a(numbers: &Vec<i32>) -> Option<i32> {
     None
 }
 
-fn solve_b(numbers: &Vec<i32>) -> Option<i32> {
+fn solve_b(numbers: &[i32]) -> Option<i32> {
     let comb = numbers.iter().combinations(3);
 
     for c in comb {
