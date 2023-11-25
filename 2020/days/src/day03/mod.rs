@@ -31,9 +31,21 @@ pub fn day03() {
 
     let lines = io::read_lines("./03.data").unwrap();
     let area = Area::new(lines);
-
     let pt_move = point2d::Point2d::new(3, 1);
-    let mut point = pt_move.clone();
+    let trees = solve(&area, &pt_move);
+    println!("Result A: {trees}");
+
+    let r1 = solve(&area, &point2d::Point2d::new(1, 1));
+    let r2 = solve(&area, &point2d::Point2d::new(3, 1));
+    let r3 = solve(&area, &point2d::Point2d::new(5, 1));
+    let r4 = solve(&area, &point2d::Point2d::new(7, 1));
+    let r5 = solve(&area, &point2d::Point2d::new(1, 2));
+    let result_b = r1 * r2 * r3 * r4 * r5;
+    println!("Result B: {r1} {r2} {r3} {r4} {r5} {result_b}")
+}
+
+fn solve(area: &Area, delta: &Point2d) -> i32 {
+    let mut point = delta.clone();
     let mut count_tree = 0;
     while point.y < area.size.y {
         match area.value(&point) {
@@ -45,7 +57,8 @@ pub fn day03() {
                 panic!("bad area value value")
             }
         }
-        println!("result size {:?} {count_tree}", point);
-        point = point.add(&pt_move);
+        // println!("result size {:?} {count_tree}", point);
+        point = point.add(&delta);
     }
+    count_tree
 }
