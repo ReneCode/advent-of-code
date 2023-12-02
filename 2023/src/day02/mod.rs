@@ -32,6 +32,23 @@ impl Game {
         }
         true
     }
+
+    fn power_of_fewest_set(&self) -> i32 {
+        let mut fewest_set: HashMap<String, i32> = HashMap::new();
+        for cube_set in self.cube_sets.iter() {
+            for (name, count) in cube_set {
+                if let Some(existing_count) = fewest_set.get_mut(name) {
+                    *existing_count = i32::max(*existing_count, *count);
+                } else {
+                    fewest_set.insert(name.clone(), *count);
+                }
+            }
+        }
+
+        let power: i32 = fewest_set.values().product();
+        // println!(">> {} {power}", self.id);
+        power
+    }
 }
 
 pub fn day02() {
@@ -56,6 +73,9 @@ pub fn day02() {
         .map(|game| game.id)
         .sum();
     println!("Result A: {count_valid_games}");
+
+    let sum_of_powers: i32 = games.iter().map(|game| game.power_of_fewest_set()).sum();
+    println!("Result B: {sum_of_powers}");
 }
 
 fn parse_game(line: &str) -> Game {
