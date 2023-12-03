@@ -5,7 +5,7 @@ mod day02;
 mod day03;
 mod util;
 
-const CURRENT_DAY: i32 = 2;
+const CURRENT_DAY: i32 = 3;
 
 fn main() {
     println!("Hello Advent of Code 2020!");
