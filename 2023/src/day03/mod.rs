@@ -26,6 +26,22 @@ pub fn day03() {
     println!("Result A: {result}")
 }
 
+fn get_symbols(lines: &[String]) -> Vec<Point2d> {
+    let mut result: Vec<Point2d> = Vec::new();
+    for y in 0..lines.len() {
+        let line = &lines[y];
+        for x in 0..line.len() {
+            let c = line.chars().nth(x).unwrap();
+            if !c.is_digit(10) && c != '.' {
+                result.push(Point2d::new(x, y));
+
+                // println!(">>>> symbol: {c} {x} {y}")
+            }
+        }
+    }
+    result
+}
+
 fn is_symbol(lines: &[String], x: usize, y: usize) -> bool {
     let line = &lines[y];
     let c = line.chars().nth(x).unwrap();
@@ -40,13 +56,13 @@ fn has_adjacent_to_symbol(lines: &[String], number: &Number) -> bool {
         let nb = point2d::get_neighbours(&Point2d::new(x, number.y), x_max, y_max);
         neighbours.extend(nb);
     }
+    // println!(">> neighbours: {:?} {:?}", number, neighbours);
 
     for neighbour in neighbours {
         if is_symbol(lines, neighbour.x, neighbour.y) {
             return true;
         }
     }
-    // println!(">> neighbours: {:?} {:?}", number, neighbours);
 
     false
 }
@@ -87,6 +103,8 @@ fn get_numbers(lines: &Vec<String>) -> Vec<Number> {
             }
         }
     }
+
+    // println!("numbers {:?}", numbers);
     numbers
 }
 
@@ -96,7 +114,7 @@ fn get_last_digit_index(line: &str, x_start: usize) -> Option<usize> {
             return Some(idx - 1);
         }
     }
-    Some(x_start)
+    Some(line.len() - 1)
 }
 
 fn get_first_digit_index(line: &str, x_start: usize) -> Option<usize> {

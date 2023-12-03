@@ -10,6 +10,12 @@ impl Point2d {
     pub fn new(x: usize, y: usize) -> Self {
         Point2d { x: x, y: y }
     }
+
+    pub fn is_near(&self, other: &Point2d) -> bool {
+        let dx = self.x.max(other.x) - self.x.min(other.x);
+        let dy = self.y.max(other.y) - self.y.min(other.y);
+        dx <= 1 && dy <= 1
+    }
 }
 pub fn get_neighbours(pt: &Point2d, x_max: usize, y_max: usize) -> HashSet<Point2d> {
     let mut result: HashSet<Point2d> = HashSet::new();
