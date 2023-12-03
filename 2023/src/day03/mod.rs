@@ -1,5 +1,6 @@
 // day03
 
+use core::num;
 use std::collections::HashSet;
 
 use crate::util::{
@@ -23,16 +24,48 @@ pub fn day03() {
     let valid_numbers = get_valid_numbers(&lines, &numbers);
     // println!(">>> valid numbers {:?}", valid_numbers);
     let result: i32 = valid_numbers.iter().sum();
-    println!("Result A: {result}")
+    println!("Result A: {result}");
+
+    let gear_symbols = get_gear_symbols(&lines);
+    let result_b = get_result_b(&numbers, &gear_symbols);
+
+    println!("Result B: {result_b}")
 }
 
-fn get_symbols(lines: &[String]) -> Vec<Point2d> {
+fn is_number_nearby(number: &Number, pt: &Point2d) -> bool {
+    for x in number.x_start..number.x_stop + 1 {
+        let num_pt = Point2d::new(x, number.y);
+        if num_pt.is_near(pt) {
+            return true;
+        }
+    }
+    false
+}
+
+fn get_result_b(numbers: &[Number], gear_symbols: &[Point2d]) -> i32 {
+    let mut result = 0;
+    for gear_symbol in gear_symbols {
+        let mut numbers_nearby: Vec<i32> = Vec::new();
+        for number in numbers {
+            if is_number_nearby(number, gear_symbol) {
+                numbers_nearby.push(number.value)
+            }
+        }
+        if numbers_nearby.len() == 2 {
+            let gear_ratio: i32 = numbers_nearby.iter().product();
+            result += gear_ratio;
+        }
+    }
+    result
+}
+
+fn get_gear_symbols(lines: &[String]) -> Vec<Point2d> {
     let mut result: Vec<Point2d> = Vec::new();
     for y in 0..lines.len() {
         let line = &lines[y];
         for x in 0..line.len() {
             let c = line.chars().nth(x).unwrap();
-            if !c.is_digit(10) && c != '.' {
+            if c == '*' {
                 result.push(Point2d::new(x, y));
 
                 // println!(">>>> symbol: {c} {x} {y}")
