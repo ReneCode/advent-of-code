@@ -15,14 +15,23 @@ struct Card {
     id: i32,
     winning_numbers: Vec<i32>,
     my_numbers: Vec<i32>,
+    count_matching_numbers: i32,
 }
 
 impl Card {
     fn new(id: i32, winning_numbers: Vec<i32>, my_numbers: Vec<i32>) -> Self {
+        let mut count_matching_numbers = 0;
+
+        for wining_nr in winning_numbers.iter() {
+            if my_numbers.contains(&wining_nr) {
+                count_matching_numbers += 1
+            }
+        }
         Card {
             id,
             winning_numbers,
             my_numbers,
+            count_matching_numbers,
         }
     }
 
@@ -58,6 +67,28 @@ pub fn day04() {
         })
         .sum();
     println!("Result A: {result_a}");
+
+    let mut result_b = 0;
+    for card in cards.iter() {
+        let count = count_resulting_cards(&cards, card);
+        result_b += count;
+        // println!(">> {}  {}", card.id, count);
+    }
+    println!("Result B: {result_b}");
+}
+
+fn count_resulting_cards(cards: &Vec<Card>, card: &Card) -> i32 {
+    let mut count = 1;
+    for id in card.id + 1..card.id + 1 + card.count_matching_numbers {
+        let other_card = get_card(&cards, id);
+        let count_other = count_resulting_cards(cards, other_card);
+        count += count_other;
+    }
+    count
+}
+
+fn get_card(cards: &Vec<Card>, id: i32) -> &Card {
+    cards.iter().find(|c| c.id == id).unwrap()
 }
 
 fn get_matching_numbers(cards: &Vec<Card>) -> Vec<Vec<i32>> {
