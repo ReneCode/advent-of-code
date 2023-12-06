@@ -33,6 +33,26 @@ pub fn day06() {
     // println!("{:?}", counts);
     let result_a: i32 = counts.iter().product();
     println!("Result A: {result_a}");
+
+    let one_time: i64 = times
+        .iter()
+        .map(|n| format!("{n}"))
+        .join("")
+        .parse()
+        .unwrap();
+    let one_distance: i64 = distances
+        .iter()
+        .map(|n| format!("{n}"))
+        .join("")
+        .parse()
+        .unwrap();
+
+    let result_b = (1..one_time)
+        .map(|t| t * (one_time - t))
+        .filter(|v| *v > one_distance)
+        .count();
+
+    println!("Result B: {result_b}");
 }
 
 fn get_distances(time: i32) -> Vec<i32> {
