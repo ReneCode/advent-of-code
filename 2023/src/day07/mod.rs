@@ -1,8 +1,6 @@
 // day07
 
-use std::{cmp::Ordering, collections::HashSet, string};
-
-use itertools::Itertools;
+use std::{cmp::Ordering, collections::HashSet};
 
 use crate::util::{io, parse};
 
@@ -22,22 +20,6 @@ impl Game {
             bid: bid,
             rank: 0,
             typ: typ,
-        }
-    }
-}
-
-#[derive(Debug)]
-
-struct CharCount {
-    char: char,
-    count: i32,
-}
-
-impl CharCount {
-    fn new(c: char, count: i32) -> Self {
-        CharCount {
-            char: c,
-            count: count,
         }
     }
 }
@@ -84,7 +66,7 @@ fn get_type(cards: &str) -> Type {
 fn get_duplicates(cards: &str) -> Vec<i32> {
     let mut checked_chars: HashSet<char> = HashSet::new();
     let mut dups: Vec<i32> = Vec::new();
-    let mut count_joker = 0;
+    // let mut count_joker = 0;
     for i in 0..cards.len() {
         let mut count = 1;
         let c1 = cards.chars().nth(i).unwrap();
@@ -111,7 +93,7 @@ fn get_duplicates(cards: &str) -> Vec<i32> {
     dups.sort_by(|a, b| b.cmp(a)); // sort from high to low
 
     // println!("{:?} => {:?}", dups, duplicates);
-    if count_joker > 0 {}
+    // if count_joker > 0 {}
     dups
 }
 
@@ -170,7 +152,7 @@ fn part_a(lines: &Vec<String>) -> i32 {
     for game in games.iter_mut() {
         rank += 1;
         game.rank = rank;
-        result_a += (game.rank * game.bid);
+        result_a += game.rank * game.bid;
     }
     result_a
 }

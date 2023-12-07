@@ -1,7 +1,4 @@
-use std::{
-    fmt::{self, Debug},
-    str::FromStr,
-};
+use std::{fmt::Debug, str::FromStr};
 
 use itertools::Itertools;
 

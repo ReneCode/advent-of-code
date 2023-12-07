@@ -1,14 +1,8 @@
 // day04
 
-use core::num;
-use std::collections::HashSet;
-
 use itertools::Itertools;
 
-use crate::util::{
-    io,
-    point2d::{self, Point2d},
-};
+use crate::util::io;
 
 #[derive(Debug)]
 struct Card {

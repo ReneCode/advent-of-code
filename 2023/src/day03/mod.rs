@@ -1,6 +1,5 @@
 // day03
 
-use core::num;
 use std::collections::HashSet;
 
 use crate::util::{

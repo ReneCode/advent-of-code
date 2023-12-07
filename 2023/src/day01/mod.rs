@@ -1,9 +1,6 @@
 // day01
 
-use core::slice;
 use std::collections::HashMap;
-
-use itertools::Itertools;
 
 use crate::util::io;
 
@@ -71,7 +68,6 @@ fn get_nr_from_digit_or_name(line: &str) -> i32 {
 }
 
 fn get_val(line: &str, str_to_val: &HashMap<String, i32>) -> i32 {
-    let a = 42;
     for idx in 0..line.len() {
         let search = &line[idx..];
         for (k, v) in str_to_val.iter() {

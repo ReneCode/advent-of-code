@@ -1,8 +1,5 @@
 // day06
 
-use core::num;
-use std::{collections::HashSet, string};
-
 use itertools::Itertools;
 
 use crate::util::{io, parse};
