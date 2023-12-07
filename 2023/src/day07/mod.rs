@@ -1,6 +1,5 @@
 // day07
 
-use core::num;
 use std::{cmp::Ordering, collections::HashSet, string};
 
 use itertools::Itertools;
@@ -19,7 +18,7 @@ impl Game {
     fn new(cards: &str, bid: i32) -> Self {
         let typ = get_type(cards);
         Game {
-            cards: replace_cards(cards),
+            cards: cards.to_string(),
             bid: bid,
             rank: 0,
             typ: typ,
@@ -60,16 +59,16 @@ fn get_type(cards: &str) -> Type {
     if len == 0 {
         return Type::HighCard;
     }
-    if len == 1 && dups[0].count == 5 {
+    if len == 1 && dups[0] == 5 {
         return Type::FiveOfKind;
     }
-    if len == 1 && dups[0].count == 4 {
+    if len == 1 && dups[0] == 4 {
         return Type::FourOfKind;
     }
-    if len == 2 && (dups[0].count == 3 || dups[1].count == 3) {
+    if len == 2 && (dups[0] == 3) {
         return Type::FullHouse;
     }
-    if len == 1 && dups[0].count == 3 {
+    if len == 1 && dups[0] == 3 {
         return Type::ThreeOfKind;
     }
     if len == 2 {
@@ -82,12 +81,17 @@ fn get_type(cards: &str) -> Type {
     panic!("bad cards")
 }
 
-fn get_duplicates(cards: &str) -> Vec<(CharCount)> {
+fn get_duplicates(cards: &str) -> Vec<i32> {
     let mut checked_chars: HashSet<char> = HashSet::new();
-    let mut dups: Vec<(CharCount)> = Vec::new();
+    let mut dups: Vec<i32> = Vec::new();
+    let mut count_joker = 0;
     for i in 0..cards.len() {
         let mut count = 1;
         let c1 = cards.chars().nth(i).unwrap();
+        // if c1 == 'J' {
+        //     count_joker += 1;
+        //     continue;
+        // }
         if checked_chars.contains(&c1) {
             continue;
         } else {
@@ -100,9 +104,14 @@ fn get_duplicates(cards: &str) -> Vec<(CharCount)> {
             }
         }
         if count > 1 {
-            dups.push(CharCount::new(c1, count));
+            dups.push(count);
         }
     }
+
+    dups.sort_by(|a, b| b.cmp(a)); // sort from high to low
+
+    // println!("{:?} => {:?}", dups, duplicates);
+    if count_joker > 0 {}
     dups
 }
 
@@ -112,9 +121,13 @@ fn replace_cards(s: &str) -> String {
         .replace('Q', "X")
         .replace('K', "Y")
         .replace('A', "Z")
+        .replace('J', "1")
 }
 
-fn cmp_stronger(s1: &str, s2: &str) -> Ordering {
+fn cmp_stronger(s1_org: &str, s2_org: &str) -> Ordering {
+    let s1 = replace_cards(s1_org);
+    let s2 = replace_cards(s2_org);
+
     for i in 0..s1.len() {
         let c1 = s1.chars().nth(i).unwrap();
         let c2 = s2.chars().nth(i).unwrap();
@@ -131,6 +144,11 @@ pub fn day07() {
 
     let lines = io::read_lines("./src/day07/07.data").unwrap();
 
+    let result_a = part_a(&lines);
+    println!("Result A: {} ", result_a);
+}
+
+fn part_a(lines: &Vec<String>) -> i32 {
     let mut games: Vec<Game> = Vec::new();
     for line in lines {
         let tok = parse::to_str(line.as_str(), ' ');
@@ -154,5 +172,5 @@ pub fn day07() {
         game.rank = rank;
         result_a += (game.rank * game.bid);
     }
-    println!("Result A: {} ", result_a);
+    result_a
 }
