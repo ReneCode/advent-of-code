@@ -2,6 +2,8 @@
 
 use std::collections::HashMap;
 
+use itertools::Itertools;
+
 use crate::util::{io, parse};
 
 enum State {
@@ -22,6 +24,14 @@ impl Node {
             name: name.to_string(),
             left: left.to_string(),
             right: right.to_string(),
+        }
+    }
+
+    fn get_next(&self, next: char) -> &str {
+        match next {
+            'L' => &self.left,
+            'R' => &self.right,
+            _ => panic!("bad instruction"),
         }
     }
 }
@@ -53,31 +63,48 @@ pub fn day08() {
             }
         }
     }
+
     // println!("read: {:?} / {:?}", instructions, nodes);
 
-    let result_a = travel(instructions, &nodes, "AAA", "ZZZ");
+    // let result_a = part_a(instructions.as_str(), &nodes, "AAA", "ZZZ");
+    // println!("Result A: {result_a}");
 
-    println!("Result A: {result_a}");
+    let result_b = part_b(instructions.as_str(), &nodes, "A", "Z");
+    println!("Result B: {result_b}");
 }
 
-fn travel(instructions: String, nodes: &Vec<Node>, start: &str, stop: &str) -> usize {
+fn part_a(instructions: &str, nodes: &Vec<Node>, start: &str, stop: &str) -> usize {
     // println!("{start} / {instruction_idx}");
     let mut idx: usize = 0;
     let mut node_name = start;
     while node_name != stop {
         let node = nodes.iter().find(|n| n.name == node_name).unwrap();
         let instruction = instructions.chars().nth(idx % instructions.len()).unwrap();
-        match instruction {
-            'L' => {
-                idx += 1;
-                node_name = &node.left;
-            }
-            'R' => {
-                idx += 1;
-                node_name = &node.right;
-            }
-            _ => panic!("bad instruction"),
-        }
+        node_name = node.get_next(instruction);
+        idx += 1;
+    }
+    idx
+}
+
+fn part_b(instructions: &str, all_nodes: &Vec<Node>, start: &str, stop: &str) -> usize {
+    // println!("{start} / {instruction_idx}");
+    let mut idx: usize = 0;
+    let mut nodes = all_nodes
+        .iter()
+        .filter(|n| n.name.ends_with(start))
+        .collect_vec();
+    while !nodes.iter().all(|n| n.name.ends_with(&stop)) {
+        let instruction = instructions.chars().nth(idx % instructions.len()).unwrap();
+        idx += 1;
+        nodes = nodes
+            .iter()
+            .map(|n| {
+                let next_name = n.get_next(instruction);
+                let next_node = all_nodes.iter().find(|n| n.name == next_name).unwrap();
+                next_node
+            })
+            .collect_vec();
+        // println!(">> {:?}", nodes.iter().map(|n| &n.name))
     }
     idx
 }
