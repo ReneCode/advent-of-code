@@ -1,6 +1,6 @@
 // day08
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::util::{io, parse};
 
@@ -11,15 +11,15 @@ enum State {
 
 #[derive(Debug)]
 struct Node {
-    name: String,
+    // name: String,
     left: String,
     right: String,
 }
 
 impl Node {
-    fn new(name: &str, left: &str, right: &str) -> Self {
+    fn new(_name: &str, left: &str, right: &str) -> Self {
         Node {
-            name: name.to_string(),
+            // name: name.to_string(),
             left: left.to_string(),
             right: right.to_string(),
         }
@@ -55,34 +55,29 @@ pub fn day08() {
     }
     // println!("read: {:?} / {:?}", instructions, nodes);
 
-    let result_a = travel(instructions, &nodes, 0, "AAA", "ZZZ");
+    let result_a = travel(instructions, &nodes, "AAA", "ZZZ");
 
-    println!("Result A:{result_a}");
+    println!("Result A: {result_a}");
 }
 
-fn travel(
-    instructions: String,
-    nodes: &HashMap<String, Node>,
-    instruction_idx: usize,
-    start: &str,
-    stop: &str,
-) -> usize {
-    println!("{start} / {instruction_idx}");
-    if start == stop {
-        return instruction_idx;
-    }
-    let node = nodes.get(start).unwrap();
-    let instruction = instructions
-        .chars()
-        .nth(instruction_idx % instructions.len())
-        .unwrap();
-    match instruction {
-        'L' => {
-            return travel(instructions, nodes, instruction_idx + 1, &node.left, stop);
+fn travel(instructions: String, nodes: &HashMap<String, Node>, start: &str, stop: &str) -> usize {
+    // println!("{start} / {instruction_idx}");
+    let mut idx: usize = 0;
+    let mut node_name = start;
+    while node_name != stop {
+        let node = nodes.get(node_name).unwrap();
+        let instruction = instructions.chars().nth(idx % instructions.len()).unwrap();
+        match instruction {
+            'L' => {
+                idx += 1;
+                node_name = &node.left;
+            }
+            'R' => {
+                idx += 1;
+                node_name = &node.right;
+            }
+            _ => panic!("bad instruction"),
         }
-        'R' => {
-            return travel(instructions, nodes, instruction_idx + 1, &node.right, stop);
-        }
-        _ => panic!("bad instruction"),
     }
+    idx
 }
