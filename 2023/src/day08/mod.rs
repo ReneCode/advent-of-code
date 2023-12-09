@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-use crate::util::{io, parse};
+use crate::util::{io, math, parse};
 
 enum State {
     ReadInstructions,
@@ -66,8 +66,8 @@ pub fn day08() {
 
     // println!("read: {:?} / {:?}", instructions, nodes);
 
-    // let result_a = part_a(instructions.as_str(), &nodes, "AAA", "ZZZ");
-    // println!("Result A: {result_a}");
+    let result_a = part_a(instructions.as_str(), &nodes, "AAA", "ZZZ");
+    println!("Result A: {result_a}");
 
     let result_b = part_b(instructions.as_str(), &nodes, "A", "Z");
     println!("Result B: {result_b}");
@@ -86,25 +86,32 @@ fn part_a(instructions: &str, nodes: &Vec<Node>, start: &str, stop: &str) -> usi
     idx
 }
 
-fn part_b(instructions: &str, all_nodes: &Vec<Node>, start: &str, stop: &str) -> usize {
-    // println!("{start} / {instruction_idx}");
-    let mut idx: usize = 0;
-    let mut nodes = all_nodes
+fn part_b(instructions: &str, all_nodes: &Vec<Node>, start: &str, stop: &str) -> i64 {
+    let nodes = all_nodes
         .iter()
         .filter(|n| n.name.ends_with(start))
         .collect_vec();
-    while !nodes.iter().all(|n| n.name.ends_with(&stop)) {
-        let instruction = instructions.chars().nth(idx % instructions.len()).unwrap();
-        idx += 1;
-        nodes = nodes
-            .iter()
-            .map(|n| {
-                let next_name = n.get_next(instruction);
-                let next_node = all_nodes.iter().find(|n| n.name == next_name).unwrap();
-                next_node
-            })
-            .collect_vec();
-        // println!(">> {:?}", nodes.iter().map(|n| &n.name))
+
+    let mut periodes: Vec<usize> = Vec::new();
+
+    for start_node in nodes {
+        let mut idx: usize = 0;
+        let mut node = start_node;
+        while !node.name.ends_with(&stop) {
+            let instruction = instructions.chars().nth(idx % instructions.len()).unwrap();
+            idx += 1;
+            let next_name = node.get_next(instruction);
+            node = all_nodes.iter().find(|n| n.name == next_name).unwrap();
+            // println!(">> {:?}", nodes.iter().map(|n| &n.name))
+        }
+        periodes.push(idx);
     }
-    idx
+    // println!(">> {:?}", periodes);
+
+    let mut result = 1;
+    for periode in periodes {
+        result = math::lcm(result, periode as i64);
+    }
+
+    result
 }
