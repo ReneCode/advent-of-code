@@ -21,11 +21,14 @@ pub fn day09() {
         histories.push(history);
     }
 
-    let result_a: Nr = histories.iter().map(|h| get_value(h)).sum();
+    let result_a: Nr = histories.iter().map(|h| get_value_a(h)).sum();
     println!("Result A: {result_a}");
+
+    let result_b: Nr = histories.iter().map(|h| get_value_b(h)).sum();
+    println!("Result B: {result_b}");
 }
 
-fn get_value(numbers: &VecNr) -> Nr {
+fn get_value_a(numbers: &VecNr) -> Nr {
     let mut next_numbers = get_next_numbers(numbers);
     let first_right_number = numbers[numbers.len() - 1];
     let mut right_numbers: VecNr = Vec::new();
@@ -39,6 +42,25 @@ fn get_value(numbers: &VecNr) -> Nr {
     }
     let sum = right_numbers.iter().sum();
     // println!("{sum}");
+    sum
+}
+
+fn get_value_b(numbers: &VecNr) -> Nr {
+    let mut next_numbers = get_next_numbers(numbers);
+    let first_left_number = numbers[0];
+    let mut left_numbers: VecNr = Vec::new();
+    left_numbers.push(first_left_number);
+    while !next_numbers.iter().all(|n| *n == 0) {
+        let left_number = next_numbers[0];
+        left_numbers.push(left_number);
+        next_numbers = get_next_numbers(&next_numbers);
+    }
+
+    let mut sum = 0;
+    for nr in left_numbers.iter().rev() {
+        sum = nr - sum;
+    }
+    println!("{:?} => {sum}", left_numbers);
     sum
 }
 

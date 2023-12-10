@@ -9,9 +9,10 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 mod util;
 
-const CURRENT_DAY: i32 = 9;
+const CURRENT_DAY: i32 = 10;
 
 fn main() {
     println!("Hello Advent of Code 2023!");
@@ -26,6 +27,7 @@ fn main() {
         7 => day07::day07(),
         8 => day08::day08(),
         9 => day09::day09(),
+        10 => day10::day10(),
         _ => println!("ups, no solution for day {CURRENT_DAY}"),
     }
 }
