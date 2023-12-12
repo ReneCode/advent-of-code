@@ -29,20 +29,21 @@ fn part_a(line: &str) -> usize {
     let org_pattern = tok[0];
     let counts = parse::to_numbers::<usize>(tok[1], ',');
 
-    let patterns = build_patterns(org_pattern.len(), &counts)
-        .iter()
-        // .filter(|pattern| is_valid_pattern(org_pattern, *pattern))
-        // .cloned()
-        .collect_vec();
+    let patterns = build_patterns(org_pattern, &counts);
+    // .iter()
+    // .filter(|pattern| is_valid_pattern(org_pattern, *pattern))
+    // .cloned()
+    // .collect_vec();
 
     println!("{line} {}", patterns.len());
     patterns.len()
     // println!("============ {:?} / {:?}", org_pattern, counts);
 }
 
-fn build_patterns(len: usize, counts: &[usize]) -> Vec<String> {
+fn build_patterns(org_pattern: &str, counts: &[usize]) -> Vec<String> {
     let mut result: Vec<String> = Vec::new();
 
+    let len = org_pattern.len();
     let count_gap = counts.len() + 1;
     let max_gap_len = len - counts.len();
 
@@ -58,6 +59,7 @@ fn build_patterns(len: usize, counts: &[usize]) -> Vec<String> {
 
     loop {
         let mut str = String::new();
+        let mut ok = true;
         for idx in 0..count_gap {
             let gap_len = gap_lengths[idx];
             append_string(&mut str, EMPTY, gap_len);
@@ -65,8 +67,12 @@ fn build_patterns(len: usize, counts: &[usize]) -> Vec<String> {
                 let fill_len = counts[idx];
                 append_string(&mut str, DAMAGED, fill_len);
             }
+            if str.len() > len || !is_valid_pattern(org_pattern, str.as_str()) {
+                ok = false;
+                break;
+            }
         }
-        if str.len() == len {
+        if ok && str.len() == len && is_valid_pattern(org_pattern, str.as_str()) {
             result.push(str);
         }
         let mut finished = true;
@@ -99,15 +105,6 @@ fn append_string(str: &mut String, c: char, count: usize) {
     for _ in 0..count {
         str.push(c);
     }
-}
-
-fn get_valid_patterns(
-    org_pattern: &str,
-    start_pattern_idx: usize,
-    counts: &Vec<usize>,
-    counts_idx: usize,
-) -> Vec<String> {
-    todo!()
 }
 
 fn is_valid_pattern(org_pattern: &str, check_pattern: &str) -> bool {
@@ -144,12 +141,12 @@ mod test {
     #[test]
     fn test_build_patterns() {
         assert_eq!(
-            build_patterns(3, &vec![1]),
+            build_patterns("???", &vec![1]),
             vec!["#..".to_string(), ".#.".to_string(), "..#".to_string()]
         );
 
         assert_eq!(
-            build_patterns(5, &vec![1, 2]),
+            build_patterns("?????", &vec![1, 2]),
             vec![
                 "#.##.".to_string(),
                 "#..##".to_string(),
@@ -158,7 +155,7 @@ mod test {
         );
 
         assert_eq!(
-            build_patterns(6, &vec![3, 1]),
+            build_patterns("??????", &vec![3, 1]),
             vec![
                 "###.#.".to_string(),
                 "###..#".to_string(),
