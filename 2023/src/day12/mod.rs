@@ -1,6 +1,6 @@
 // day12
 
-use std::iter;
+use std::{iter, usize};
 
 use itertools::Itertools;
 
@@ -43,9 +43,10 @@ fn part_a(line: &str) -> usize {
 fn build_patterns(org_pattern: &str, counts: &[usize]) -> Vec<String> {
     let mut result: Vec<String> = Vec::new();
 
+    let counts_sum: usize = counts.iter().sum();
     let len = org_pattern.len();
     let count_gap = counts.len() + 1;
-    let max_gap_len = len - counts.len();
+    let max_gap_len = len - counts_sum;
 
     // create 0,1,1,1,0 vector.
     // first and last gap could be 0
@@ -75,24 +76,19 @@ fn build_patterns(org_pattern: &str, counts: &[usize]) -> Vec<String> {
         if ok && str.len() == len && is_valid_pattern(org_pattern, str.as_str()) {
             result.push(str);
         }
-        let mut finished = true;
-        let right_idx = count_gap - 1;
-        for idx in (0..count_gap).rev() {
-            let gap_len = gap_lengths.get_mut(idx).unwrap();
-            if *gap_len < max_gap_len {
-                *gap_len += 1;
-                finished = false;
+
+        let mut finished = false;
+        loop {
+            if next_gaps(&mut gap_lengths, max_gap_len) {
+                finished = true;
                 break;
-            } else if *gap_len == max_gap_len {
-                // the middle gaps will start at length 1
-                // the outer gaps start at length 0
-                if idx == 0 || idx == right_idx {
-                    *gap_len = 0;
-                } else {
-                    *gap_len = 1;
-                }
+            }
+            let complete_sum: usize = gap_lengths.iter().sum::<usize>() + counts_sum;
+            if complete_sum == len {
+                break;
             }
         }
+
         if finished {
             break;
         }
@@ -101,7 +97,32 @@ fn build_patterns(org_pattern: &str, counts: &[usize]) -> Vec<String> {
     result
 }
 
+fn next_gaps(gap_lengths: &mut Vec<usize>, max_gap_len: usize) -> bool {
+    let count_gap = gap_lengths.len();
+    let mut finished = true;
+    let right_idx = count_gap - 1;
+    for idx in (0..count_gap).rev() {
+        let gap_len = gap_lengths.get_mut(idx).unwrap();
+        if *gap_len < max_gap_len {
+            *gap_len += 1;
+            finished = false;
+            break;
+        } else if *gap_len == max_gap_len {
+            // the middle gaps will start at length 1
+            // the outer gaps start at length 0
+            if idx == 0 || idx == right_idx {
+                *gap_len = 0;
+            } else {
+                *gap_len = 1;
+            }
+        }
+    }
+    finished
+}
+
 fn append_string(str: &mut String, c: char, count: usize) {
+    // let app: String = iter::repeat(c).take(count).collect();
+    // str.push_str(app.as_str())
     for _ in 0..count {
         str.push(c);
     }
