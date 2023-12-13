@@ -40,13 +40,13 @@ fn get_mirror_value(group: &[&str], look_smudge: bool) -> usize {
     // println!("{:?}", group);
     if let Some(row_idx) = find_horizontal_mirror(group, look_smudge) {
         return (row_idx + 1) * 100;
-    } else {
-        let turned_group = turn_pattern(group);
-        let tg = turned_group.iter().map(|r| r.as_str()).collect_vec();
-        if let Some(col_idx) = find_horizontal_mirror(&tg, look_smudge) {
-            return col_idx + 1;
-        }
     }
+    let turned_group = turn_pattern(group);
+    let tg = turned_group.iter().map(|r| r.as_str()).collect_vec();
+    if let Some(col_idx) = find_horizontal_mirror(&tg, look_smudge) {
+        return col_idx + 1;
+    }
+
     0
 }
 
@@ -65,8 +65,8 @@ fn turn_pattern(group: &[&str]) -> Vec<String> {
 
 fn find_horizontal_mirror(group: &[&str], look_smudge: bool) -> Option<usize> {
     let len = group.len();
-    let mut found_smudge = false;
     for check_row in 0..group.len() - 1 {
+        let mut found_smudge = false;
         let mut is_same = true;
         let mut start = check_row;
         let mut oposite = start + 1;
@@ -130,6 +130,7 @@ mod test_day13 {
     #[test]
     fn test_find_horizontal_mirror() {
         assert_eq!(find_horizontal_mirror(&vec!["A", "B"], false), None);
+        assert_eq!(find_horizontal_mirror(&vec!["A", "B", "B"], false), Some(1));
         assert_eq!(find_horizontal_mirror(&vec!["A", "A"], false), Some(0));
         assert_eq!(find_horizontal_mirror(&vec!["A", "B", "B"], false), Some(1));
         assert_eq!(
@@ -155,6 +156,15 @@ mod test_day13 {
         assert_eq!(
             find_horizontal_mirror(&vec![".", "B", "B", "#", "C"], true),
             Some(1)
+        );
+
+        assert_eq!(find_horizontal_mirror(&vec!["##.", "#.."], true), Some(0));
+        assert_eq!(find_horizontal_mirror(&vec!["##.", "##."], true), None);
+
+        // reset check smudge each try-round
+        assert_eq!(
+            find_horizontal_mirror(&vec!["....", "#.#.", "###.", ".##.", ".##."], true),
+            None
         );
 
         assert_eq!(
