@@ -13,10 +13,32 @@ const NOTKNOWN: char = '?';
 pub fn day12() {
     println!("hello day12");
 
-    let lines = io::read_lines("./src/day12/12.data").unwrap();
+    let lines = io::read_lines("./src/day12/12-example.data").unwrap();
 
-    let result_a: usize = lines.iter().map(|line| part_a(line)).sum();
-    println!("Result A: {result_a}");
+    // let result_a: usize = lines.iter().map(|line| part_a(line)).sum();
+    // println!("Result A: {result_a}");
+
+    let result_b: usize = lines
+        .iter()
+        .map(|line| {
+            let tok = parse::to_str(line, ' ');
+            let mut exp_line = tok[0].to_string();
+            for _ in 1..5 {
+                exp_line.push('?');
+                exp_line.push_str(tok[0])
+            }
+            exp_line.push(' ');
+            exp_line.push_str(tok[1]);
+            for _ in 1..5 {
+                exp_line.push(',');
+                exp_line.push_str(tok[1])
+            }
+
+            return exp_line;
+        })
+        .map(|line| part_a(&line))
+        .sum();
+    println!("Result B: {result_b}");
 
     // for line in lines {
     //     let result = part_a(&line);
@@ -25,7 +47,7 @@ pub fn day12() {
 }
 
 fn part_a(line: &str) -> usize {
-    let tok = parse::to_str(line, ' ');
+    let tok: Vec<&str> = parse::to_str(line, ' ');
     let org_pattern = tok[0];
     let counts = parse::to_numbers::<usize>(tok[1], ',');
 
@@ -46,7 +68,7 @@ fn build_patterns(org_pattern: &str, counts: &[usize]) -> Vec<String> {
     let counts_sum: usize = counts.iter().sum();
     let len = org_pattern.len();
     let count_gap = counts.len() + 1;
-    let max_gap_len = len - counts_sum;
+    let max_gap_len = len - counts_sum + 1 - (count_gap - 2);
 
     // create 0,1,1,1,0 vector.
     // first and last gap could be 0
@@ -68,7 +90,8 @@ fn build_patterns(org_pattern: &str, counts: &[usize]) -> Vec<String> {
                 let fill_len = counts[idx];
                 append_string(&mut str, DAMAGED, fill_len);
             }
-            if str.len() > len || !is_valid_pattern(org_pattern, str.as_str()) {
+            if str.len() > len {
+                // || !is_valid_pattern(org_pattern, str.as_str()) {
                 ok = false;
                 break;
             }
