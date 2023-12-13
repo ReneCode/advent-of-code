@@ -4,6 +4,9 @@ use std::{iter, usize};
 
 use itertools::Itertools;
 
+const ON: char = '#';
+const OFF: char = '.';
+
 use crate::util::{io, parse};
 
 pub fn day13() {
@@ -18,19 +21,29 @@ pub fn day13() {
 
     let result_a = groups
         .iter()
-        .map(|group| get_mirror_value(&group))
+        .map(|group| get_mirror_value(&group, false))
         .sum::<usize>();
     println!("Result A {result_a}");
+
+    let result_b = groups
+        .iter()
+        .map(|group| {
+            let val = get_mirror_value(&group, true);
+            // println!("{val}   {:?}", group);
+            val
+        })
+        .sum::<usize>();
+    println!("Result B {result_b}");
 }
 
-fn get_mirror_value(group: &[&str]) -> usize {
+fn get_mirror_value(group: &[&str], look_smudge: bool) -> usize {
     // println!("{:?}", group);
-    if let Some(row_idx) = find_horizontal_mirror(group) {
+    if let Some(row_idx) = find_horizontal_mirror(group, look_smudge) {
         return (row_idx + 1) * 100;
     } else {
         let turned_group = turn_pattern(group);
         let tg = turned_group.iter().map(|r| r.as_str()).collect_vec();
-        if let Some(col_idx) = find_horizontal_mirror(&tg) {
+        if let Some(col_idx) = find_horizontal_mirror(&tg, look_smudge) {
             return col_idx + 1;
         }
     }
@@ -50,14 +63,23 @@ fn turn_pattern(group: &[&str]) -> Vec<String> {
     result
 }
 
-fn find_horizontal_mirror(group: &[&str]) -> Option<usize> {
+fn find_horizontal_mirror(group: &[&str], look_smudge: bool) -> Option<usize> {
     let len = group.len();
+    let mut found_smudge = false;
     for check_row in 0..group.len() - 1 {
         let mut is_same = true;
         let mut start = check_row;
         let mut oposite = start + 1;
         while is_same {
             is_same = group[start] == group[oposite];
+            if look_smudge {
+                if !is_same && !found_smudge {
+                    if same_with_sumdge(group[start], group[oposite]) {
+                        is_same = true;
+                        found_smudge = true;
+                    }
+                }
+            }
             if is_same {
                 if start > 0 && oposite + 1 < len {
                     // continue check next line
@@ -69,30 +91,91 @@ fn find_horizontal_mirror(group: &[&str]) -> Option<usize> {
             }
         }
         if is_same {
-            return Some(check_row);
+            if !look_smudge {
+                return Some(check_row);
+            }
+            if look_smudge && found_smudge {
+                return Some(check_row);
+            }
         }
     }
     None
 }
 
+fn same_with_sumdge(start: &str, oposite: &str) -> bool {
+    let mut found_smudge = false;
+    let mut is_same = true;
+    for idx in 0..start.len() {
+        let c1 = start.chars().nth(idx).unwrap();
+        let c2 = oposite.chars().nth(idx).unwrap();
+        is_same = c1 == c2;
+        if !is_same && !found_smudge {
+            if c1 == ON && c2 == OFF || c1 == OFF && c2 == ON {
+                is_same = true;
+                found_smudge = true;
+            }
+        }
+        if !is_same {
+            break;
+        }
+    }
+
+    is_same
+}
+
 #[cfg(test)]
 mod test_day13 {
-    use crate::day13::{find_horizontal_mirror, turn_pattern};
+    use crate::day13::{find_horizontal_mirror, same_with_sumdge, turn_pattern};
 
     #[test]
     fn test_find_horizontal_mirror() {
-        assert_eq!(find_horizontal_mirror(&vec!["A", "B"]), None);
-        assert_eq!(find_horizontal_mirror(&vec!["A", "A"]), Some(0));
-        assert_eq!(find_horizontal_mirror(&vec!["A", "B", "B"]), Some(1));
-        assert_eq!(find_horizontal_mirror(&vec!["A", "B", "B", "C"]), None);
-        assert_eq!(find_horizontal_mirror(&vec!["A", "B", "B", "A"]), Some(1));
+        assert_eq!(find_horizontal_mirror(&vec!["A", "B"], false), None);
+        assert_eq!(find_horizontal_mirror(&vec!["A", "A"], false), Some(0));
+        assert_eq!(find_horizontal_mirror(&vec!["A", "B", "B"], false), Some(1));
         assert_eq!(
-            find_horizontal_mirror(&vec!["A", "B", "C", "C", "B"]),
+            find_horizontal_mirror(&vec!["A", "B", "B", "C"], false),
+            None
+        );
+        assert_eq!(
+            find_horizontal_mirror(&vec!["A", "B", "B", "A"], false),
+            Some(1)
+        );
+        assert_eq!(
+            find_horizontal_mirror(&vec!["A", "B", "C", "C", "B"], false),
             Some(2)
         );
         assert_eq!(
-            find_horizontal_mirror(&vec!["A", "B", "B", "A", "B"]),
+            find_horizontal_mirror(&vec!["A", "B", "B", "A", "B"], false),
             Some(1)
+        );
+    }
+
+    #[test]
+    fn test_find_horizontal_mirror_smudge() {
+        assert_eq!(
+            find_horizontal_mirror(&vec![".", "B", "B", "#", "C"], true),
+            Some(1)
+        );
+
+        assert_eq!(
+            find_horizontal_mirror(&vec!["#", "A", "B", "B", "A", ".", "C"], true),
+            Some(2)
+        );
+
+        assert_eq!(
+            find_horizontal_mirror(
+                &vec![".", "X", "#", "A", "B", "B", "A", ".", "X", "#", "C"],
+                true
+            ),
+            None
+        );
+
+        assert_eq!(
+            find_horizontal_mirror(
+                &vec![".", "X", "#", "A", "B", "B", "A", ".", "X", ".", "C"],
+                true
+            ),
+            Some(4)
         );
     }
 
@@ -107,5 +190,14 @@ mod test_day13 {
             turn_pattern(&vec!["ABC", "XYZ", "UVW"]),
             vec!["AXU".to_string(), "BYV".to_string(), "CZW".to_string()]
         );
+    }
+
+    #[test]
+    fn test_same_with_sumdge() {
+        assert_eq!(same_with_sumdge("abc", "abc"), true);
+        assert_eq!(same_with_sumdge("abc", "xyz"), false);
+        assert_eq!(same_with_sumdge(".abc", "#abc"), true);
+        assert_eq!(same_with_sumdge("abc#", "abc."), true);
+        assert_eq!(same_with_sumdge("abc#.", "abc.#"), false);
     }
 }

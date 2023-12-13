@@ -1,7 +1,5 @@
 // day08
 
-use std::collections::HashMap;
-
 use itertools::Itertools;
 
 use crate::util::{io, math, parse};
