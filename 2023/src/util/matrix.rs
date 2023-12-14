@@ -1,43 +1,26 @@
 // matrix.rs
 
-use core::fmt;
-use std::{fmt::Debug, iter};
+use std::{
+    fmt::{Debug, Display},
+    iter,
+};
 
 use itertools::Itertools;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Matrix<T> {
     elements: Vec<Vec<T>>,
     xlen: usize,
     ylen: usize,
 }
 
-// impl<T> fmt::Debug for Matrix<T>
-// where
-//     T: Debug,
-// {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         f.debug_struct("Matrix").field(name, value)
-//         f.debug_tuple("Size")
-//             .field(&self.xlen)
-//             .field(&self.ylen)
-//             .finish()
-
-//         // f.debug_struct("Matrix")
-//         //     .field("elements", &self.elements)
-//         //     .field("xlen", &self.xlen)
-//         //     .field("ylen", &self.ylen)
-//         //     .finish()
-//     }
-// }
-
 impl<T> Matrix<T>
 where
-    T: Clone + Copy,
+    T: Clone + Copy + Display,
 {
     pub fn new(xlen: usize, ylen: usize, default: T) -> Self {
         let mut elements: Vec<Vec<T>> = Vec::new();
-        for y in 0..ylen {
+        for _ in 0..ylen {
             let row: Vec<T> = iter::repeat(default).take(xlen).collect_vec();
             elements.push(row);
         }
@@ -66,12 +49,6 @@ where
         val
     }
 
-    fn check_pos(&self, pos: (usize, usize)) {
-        if (pos.0 >= self.xlen || pos.1 >= self.ylen) {
-            panic!("bad position")
-        }
-    }
-
     pub fn rotate_right(&self) -> Matrix<T> {
         let mut elements = Vec::new();
         for x in 0..self.xlen {
@@ -83,11 +60,25 @@ where
             elements.push(row)
         }
 
-        let mut new_matrix = Matrix {
+        let new_matrix = Matrix {
             xlen: self.ylen,
             ylen: self.xlen,
             elements: elements,
         };
         new_matrix
+    }
+
+    pub fn to_string(&self) -> String {
+        let mut result = String::new();
+        for row in self.elements.iter() {
+            let mut row_result = String::new();
+            for ele in row {
+                let out = format!("{}", &ele);
+                row_result.push_str(&out);
+            }
+            row_result.push('\n');
+            result.push_str(&row_result)
+        }
+        result
     }
 }
