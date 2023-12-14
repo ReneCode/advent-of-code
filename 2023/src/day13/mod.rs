@@ -7,7 +7,7 @@ use itertools::Itertools;
 const ON: char = '#';
 const OFF: char = '.';
 
-use crate::util::{io, parse};
+use crate::util::io;
 
 pub fn day13() {
     println!("hello day13");

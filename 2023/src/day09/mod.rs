@@ -1,11 +1,6 @@
 // day09
 
-use core::num;
-use std::collections::HashMap;
-
-use itertools::Itertools;
-
-use crate::util::{io, math, parse};
+use crate::util::{io, parse};
 
 type Nr = i64;
 type VecNr = Vec<Nr>;

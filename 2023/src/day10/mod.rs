@@ -1,11 +1,8 @@
 // day10
 
-use core::num;
-use std::{collections::HashMap, ops::IndexMut};
-
 use itertools::Itertools;
 
-use crate::util::{io, math, parse};
+use crate::util::io;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Direction {
@@ -175,16 +172,6 @@ fn get_directions(shape: char) -> Vec<Direction> {
         '.' => vec![],
         _ => panic!("bad shape - no valid directions"),
     }
-}
-
-fn oposite_direction(d: &Direction) -> Direction {
-    let oposite = match d {
-        Direction::North => Direction::South,
-        Direction::East => Direction::West,
-        Direction::South => Direction::North,
-        Direction::West => Direction::East,
-    };
-    oposite
 }
 
 pub fn day10() {

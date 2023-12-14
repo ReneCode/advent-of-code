@@ -1,11 +1,8 @@
 // day11
 
-use core::num;
-use std::{collections::HashMap, ops::IndexMut};
-
 use itertools::Itertools;
 
-use crate::util::{io, math, parse};
+use crate::util::io;
 
 const EMPTY: char = '.';
 const GALAXY: char = '#';
@@ -100,7 +97,7 @@ fn get_empty_cols(lines: &[String]) -> Vec<usize> {
     let mut result: Vec<usize> = vec![];
     let width = lines[0].len();
     for i in 0..width {
-        let mut col_empty = lines
+        let col_empty = lines
             .iter()
             .all(|line| line.chars().nth(i).unwrap() == EMPTY);
         if col_empty {

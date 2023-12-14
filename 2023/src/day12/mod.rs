@@ -1,8 +1,6 @@
 // day12
 
-use std::{iter, usize};
-
-use itertools::Itertools;
+use std::usize;
 
 use crate::util::{io, parse};
 
@@ -154,7 +152,6 @@ fn append_string(str: &mut String, c: char, count: usize) {
 fn is_valid_pattern(org_pattern: &str, check_pattern: &str) -> bool {
     for (i, c) in check_pattern.chars().enumerate() {
         let org_c = org_pattern.chars().nth(i).unwrap();
-        let mut ok = false;
         if org_c != c && org_c != NOTKNOWN {
             return false;
         }
@@ -167,10 +164,10 @@ fn get_possible_patterns(count: usize, max_len: usize) -> Vec<String> {
 
     for i in 0..max_len - count + 1 {
         let mut str = String::new();
-        for x in 0..i {
+        for _ in 0..i {
             str.push(EMPTY)
         }
-        for x in 0..count {
+        for _ in 0..count {
             str.push(DAMAGED)
         }
         result.push(str);
