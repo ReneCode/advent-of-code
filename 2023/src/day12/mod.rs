@@ -1,6 +1,8 @@
 // day12
 
-use std::usize;
+use std::{iter, usize};
+
+use itertools::Itertools;
 
 use crate::util::{io, parse};
 
@@ -13,9 +15,9 @@ pub fn day12() {
 
     let lines = io::read_lines("./src/day12/12-example.data").unwrap();
 
-    // let result_a: usize = lines.iter().map(|line| part_a(line)).sum();
-    // println!("Result A: {result_a}");
-
+    let result_a: usize = lines.iter().map(|line| solve(line)).sum();
+    println!("Result A: {result_a}");
+    return;
     let result_b: usize = lines
         .iter()
         .map(|line| {
@@ -34,7 +36,7 @@ pub fn day12() {
 
             return exp_line;
         })
-        .map(|line| part_a(&line))
+        .map(|line| solve(&line))
         .sum();
     println!("Result B: {result_b}");
 
@@ -44,20 +46,48 @@ pub fn day12() {
     // }
 }
 
-fn part_a(line: &str) -> usize {
+fn solve(line: &str) -> usize {
     let tok: Vec<&str> = parse::to_str(line, ' ');
     let org_pattern = tok[0];
-    let counts = parse::to_numbers::<usize>(tok[1], ',');
+    let fix_parts = parse::to_numbers::<usize>(tok[1], ',');
 
-    let patterns = build_patterns(org_pattern, &counts);
+    println!("{:?} / {:?}", org_pattern, fix_parts);
+
+    calc_gaps(&fix_parts);
+
+    // let patterns = build_patterns(org_pattern, &counts);
     // .iter()
     // .filter(|pattern| is_valid_pattern(org_pattern, *pattern))
     // .cloned()
     // .collect_vec();
 
-    println!("{line} {}", patterns.len());
-    patterns.len()
+    // println!("{line} {}", patterns.len());
+    // patterns.len()
     // println!("============ {:?} / {:?}", org_pattern, counts);
+    0
+}
+
+fn calc_gaps(fix_parts: &Vec<usize>) {
+    const SIZE: usize = 3;
+
+    fn calc_recursive(gaps: &Vec<Option<usize>>, idx: usize) {
+        println!("{:?}", gaps);
+
+        if idx == gaps.len() {
+            return;
+        }
+
+        for i in 0..SIZE {
+            let mut cp = gaps.clone();
+            let val = cp.get_mut(idx).unwrap();
+            *val = Some(i);
+
+            calc_recursive(&cp, idx + 1)
+        }
+    }
+
+    let mut gaps = iter::repeat(None as Option<usize>).take(SIZE).collect_vec();
+    calc_recursive(&gaps, 0);
 }
 
 fn build_patterns(org_pattern: &str, counts: &[usize]) -> Vec<String> {
