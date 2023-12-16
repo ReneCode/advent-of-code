@@ -25,6 +25,24 @@ pub fn day16() {
 
     let result_a = solve(&area, (0, 0), Direction::RIGHT);
     println!("Result A {result_a}");
+
+    let mut result_b = 0;
+    for x in 0..area.xlen() {
+        let result = solve(&area, (x, 0), Direction::DOWN);
+        result_b = result_b.max(result);
+
+        let result = solve(&area, (x, area.ylen() - 1), Direction::UP);
+        result_b = result_b.max(result);
+    }
+    for y in 0..area.ylen() {
+        let result = solve(&area, (0, y), Direction::RIGHT);
+        result_b = result_b.max(result);
+
+        let result = solve(&area, (area.xlen() - 1, y), Direction::LEFT);
+        result_b = result_b.max(result);
+    }
+
+    println!("Result B {result_b}");
 }
 
 fn solve(area: &Matrix<char>, start_pos: (usize, usize), start_direction: Direction) -> usize {
