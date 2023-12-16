@@ -7,6 +7,14 @@ use std::{
 
 use itertools::Itertools;
 
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub enum Direction {
+    UP,
+    RIGHT,
+    DOWN,
+    LEFT,
+}
+
 #[derive(Debug, Clone)]
 pub struct Matrix<T> {
     elements: Vec<Vec<T>>,
@@ -66,6 +74,32 @@ where
             elements: elements,
         };
         new_matrix
+    }
+
+    pub fn next_pos(&self, pos: (usize, usize), direction: &Direction) -> Option<(usize, usize)> {
+        match direction {
+            Direction::RIGHT => {
+                if pos.0 + 1 < self.xlen {
+                    return Some((pos.0 + 1, pos.1));
+                }
+            }
+            Direction::DOWN => {
+                if (pos.1 + 1 < self.ylen) {
+                    return Some((pos.0, pos.1 + 1));
+                }
+            }
+            Direction::LEFT => {
+                if (pos.0 > 0) {
+                    return Some((pos.0 - 1, pos.1));
+                }
+            }
+            Direction::UP => {
+                if (pos.1 > 0) {
+                    return Some((pos.0, pos.1 - 1));
+                }
+            }
+        }
+        None
     }
 
     pub fn to_string(&self) -> String {
