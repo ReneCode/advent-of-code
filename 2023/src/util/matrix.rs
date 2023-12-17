@@ -22,6 +22,8 @@ pub struct Matrix<T> {
     ylen: usize,
 }
 
+pub type Position = (usize, usize);
+
 impl<T> Matrix<T>
 where
     T: Clone + Copy + Display,
