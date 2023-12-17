@@ -36,18 +36,24 @@ impl<'a> PathFinder<'a> {
         // check, if the last three directions are the same
 
         let mut pos = last_pos;
-        let last_direction: Option<Direction> = None;
+        let mut last_direction: Option<Direction> = None;
         for _ in 0..3 {
+            if *pos == (0, 0) {
+                return None;
+            }
             if let Some(prev_pos) = parents.get(pos) {
                 if let Some(direction) = calc_direction(prev_pos, pos) {
                     if let Some(last_dir) = last_direction {
                         if last_dir != direction {
                             return None;
                         }
+                    } else {
+                        last_direction = Some(direction);
                     }
                 } else {
                     return None;
                 }
+                pos = prev_pos;
             } else {
                 panic!("bad parent positions")
             }
@@ -94,26 +100,39 @@ impl<'a> PathFinder<'a> {
 
             let current_distance = *distances.get(&current_pos).unwrap();
 
-            let next_positions = self.get_neighbours(current_pos);
+            let mut next_positions = self.get_neighbours(current_pos);
             if let Some(forbidden_direction) = self.get_forbidden_direction(&parents, &current_pos)
             {
-                println!("do not walk: {:?}", forbidden_direction);
+                next_positions = next_positions
+                    .iter()
+                    .filter(|p| p.1 != forbidden_direction)
+                    .map(|p| *p)
+                    .collect_vec();
+                println!(
+                    "do not walk: {:?} from pos:{:?}",
+                    forbidden_direction, current_pos,
+                );
             }
 
             for (next_pos, next_direction) in next_positions {
-                // if !parents.contains_key(&next_pos) {
-                let tile = self.area.get(next_pos);
-                let distance = current_distance + tile;
-                let next_distance = *distances.get(&next_pos).unwrap();
-                if queue.contains(&next_pos) && distance < next_distance {
-                    distances.insert(next_pos, distance);
-                    parents.insert(next_pos, current_pos);
-                } else if !parents.contains_key(&next_pos) {
-                    distances.insert(next_pos, distance);
-                    parents.insert(next_pos, current_pos);
-                    queue.push(next_pos);
+                if !parents.contains_key(&next_pos) {
+                    let tile = self.area.get(next_pos);
+                    let distance = current_distance + tile;
+                    let next_distance = *distances.get(&next_pos).unwrap();
+                    if distance < next_distance {
+                        distances.insert(next_pos, distance);
+                        parents.insert(next_pos, current_pos);
+                        queue.push(next_pos);
+                    }
                 }
-                // }
+            }
+        }
+
+        for x in 0..self.area.xlen() {
+            for y in 0..self.area.ylen() {
+                let pos = (x, y);
+                let d = distances.get(&pos).unwrap();
+                println!("{:?} {}", pos, d);
             }
         }
 

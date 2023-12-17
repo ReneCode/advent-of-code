@@ -32,7 +32,7 @@ pub fn calc_direction(p1: &Position, p2: &Position) -> Option<Direction> {
         return Some(Direction::LEFT);
     }
     if p1.0 == p2.0 && p1.1 + 1 == p2.1 {
-        return Some(Direction::UP);
+        return Some(Direction::DOWN);
     }
     if p1.0 == p2.0 && p1.1 == p2.1 + 1 {
         return Some(Direction::UP);
