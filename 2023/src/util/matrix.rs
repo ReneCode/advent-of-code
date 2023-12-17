@@ -7,7 +7,7 @@ use std::{
 
 use itertools::Itertools;
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Direction {
     UP,
     RIGHT,
@@ -23,6 +23,22 @@ pub struct Matrix<T> {
 }
 
 pub type Position = (usize, usize);
+
+pub fn calc_direction(p1: &Position, p2: &Position) -> Option<Direction> {
+    if p1.0 + 1 == p2.0 && p1.1 == p2.1 {
+        return Some(Direction::RIGHT);
+    }
+    if p1.0 == p2.0 + 1 && p1.1 == p2.1 {
+        return Some(Direction::LEFT);
+    }
+    if p1.0 == p2.0 && p1.1 + 1 == p2.1 {
+        return Some(Direction::UP);
+    }
+    if p1.0 == p2.0 && p1.1 == p2.1 + 1 {
+        return Some(Direction::UP);
+    }
+    None
+}
 
 impl<T> Matrix<T>
 where

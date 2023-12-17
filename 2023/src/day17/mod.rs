@@ -9,7 +9,7 @@ use itertools::Itertools;
 
 use crate::util::{
     io,
-    matrix::{Direction, Matrix, Position},
+    matrix::{calc_direction, Direction, Matrix, Position},
     parse,
 };
 
@@ -28,6 +28,33 @@ impl<'a> PathFinder<'a> {
         }
     }
 
+    fn get_forbidden_direction(
+        &self,
+        parents: &HashMap<Position, Position>,
+        last_pos: &Position,
+    ) -> Option<Direction> {
+        // check, if the last three directions are the same
+
+        let mut pos = last_pos;
+        let last_direction: Option<Direction> = None;
+        for _ in 0..3 {
+            if let Some(prev_pos) = parents.get(pos) {
+                if let Some(direction) = calc_direction(prev_pos, pos) {
+                    if let Some(last_dir) = last_direction {
+                        if last_dir != direction {
+                            return None;
+                        }
+                    }
+                } else {
+                    return None;
+                }
+            } else {
+                panic!("bad parent positions")
+            }
+        }
+        last_direction
+    }
+
     fn find_minimal_path(&self, start: (usize, usize)) {
         let mut distances: HashMap<Position, i32> = HashMap::new();
         for x in 0..self.area.xlen() {
@@ -39,8 +66,8 @@ impl<'a> PathFinder<'a> {
         let mut queue: Vec<Position> = Vec::new();
         queue.push(start);
 
-        let mut parents: Vec<Position> = Vec::new();
-        parents.push(start);
+        let mut parents: HashMap<Position, Position> = HashMap::new();
+        parents.insert(start, start);
 
         let stop_pos = (self.area.xlen() - 1, self.area.ylen() - 1);
 
@@ -66,18 +93,24 @@ impl<'a> PathFinder<'a> {
             queue.remove(index);
 
             let current_distance = *distances.get(&current_pos).unwrap();
+
             let next_positions = self.get_neighbours(current_pos);
-            for next_pos in next_positions {
-                // if !visited.contains_key(&next_pos) {
+            if let Some(forbidden_direction) = self.get_forbidden_direction(&parents, &current_pos)
+            {
+                println!("do not walk: {:?}", forbidden_direction);
+            }
+
+            for (next_pos, next_direction) in next_positions {
+                // if !parents.contains_key(&next_pos) {
                 let tile = self.area.get(next_pos);
                 let distance = current_distance + tile;
                 let next_distance = *distances.get(&next_pos).unwrap();
-                if queue.contains(&next_pos) && next_distance > distance {
+                if queue.contains(&next_pos) && distance < next_distance {
                     distances.insert(next_pos, distance);
-                    parents.push(next_pos)
-                } else if !parents.contains(&next_pos) {
+                    parents.insert(next_pos, current_pos);
+                } else if !parents.contains_key(&next_pos) {
                     distances.insert(next_pos, distance);
-                    parents.push(next_pos);
+                    parents.insert(next_pos, current_pos);
                     queue.push(next_pos);
                 }
                 // }
@@ -85,22 +118,36 @@ impl<'a> PathFinder<'a> {
         }
 
         let min = distances.get(&stop_pos).unwrap();
+
+        let mut min_path: Vec<Position> = Vec::new();
+        let mut pos = stop_pos;
+        while pos != start {
+            min_path.push(pos);
+            if let Some(parent_pos) = parents.get(&pos) {
+                pos = *parent_pos;
+            } else {
+                panic!("broken path")
+            }
+        }
+
+        min_path.reverse();
         println!("solve {min}");
+        println!("solve {:?}", min_path);
     }
 
-    fn get_neighbours(&self, pos: (usize, usize)) -> Vec<Position> {
-        let mut result: Vec<Position> = Vec::new();
+    fn get_neighbours(&self, pos: Position) -> Vec<(Position, Direction)> {
+        let mut result: Vec<(Position, Direction)> = Vec::new();
         if let Some(next) = self.area.next_pos(pos, &Direction::UP) {
-            result.push(next);
+            result.push((next, Direction::UP));
         }
         if let Some(next) = self.area.next_pos(pos, &Direction::RIGHT) {
-            result.push(next);
+            result.push((next, Direction::RIGHT));
         }
         if let Some(next) = self.area.next_pos(pos, &Direction::DOWN) {
-            result.push(next);
+            result.push((next, Direction::DOWN));
         }
         if let Some(next) = self.area.next_pos(pos, &Direction::LEFT) {
-            result.push(next);
+            result.push((next, Direction::LEFT));
         }
         result
     }
@@ -120,14 +167,14 @@ pub fn day17() {
         }
     }
 
-    println!("area {:?}", area);
+    // println!("area {:?}", area);
 
     let result_a: i32 = part_a(&area);
 }
 
 fn part_a(area: &Matrix<i32>) -> i32 {
     let path_finder = PathFinder::new(area);
-
     path_finder.find_minimal_path((0, 0));
+
     0
 }
