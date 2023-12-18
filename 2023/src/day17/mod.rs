@@ -61,44 +61,47 @@ impl<'a> PathFinder<'a> {
         last_direction
     }
 
-    fn find_minimal_path(&self, start: (usize, usize)) {
-        let mut distances: HashMap<Position, i32> = HashMap::new();
-        for x in 0..self.area.xlen() {
-            for y in 0..self.area.ylen() {
-                distances.insert((x, y), i32::MAX);
+    fn get_minimal_unvisited_cost(
+        &self,
+        costs: &HashMap<Position, i32>,
+        visited: &Vec<Position>,
+    ) -> (Position, i32) {
+        let mut min_cost = i32::MAX;
+        let mut min_pos = (0, 0);
+        for pos in costs.keys().filter(|p| !visited.contains(p)) {
+            if let Some(cost) = costs.get(pos) {
+                if *cost < min_cost {
+                    min_cost = *cost;
+                    min_pos = *pos;
+                }
+            } else {
+                panic!("broken cost map")
             }
         }
-        distances.insert(start, 0);
-        let mut queue: Vec<Position> = Vec::new();
-        queue.push(start);
+
+        (min_pos, min_cost)
+    }
+
+    fn find_minimal_path(&self, start: (usize, usize)) {
+        let mut costs: HashMap<Position, i32> = HashMap::new();
+        for x in 0..self.area.xlen() {
+            for y in 0..self.area.ylen() {
+                costs.insert((x, y), i32::MAX);
+            }
+        }
+        costs.insert(start, 0);
 
         let mut parents: HashMap<Position, Position> = HashMap::new();
         parents.insert(start, start);
 
         let stop_pos = (self.area.xlen() - 1, self.area.ylen() - 1);
 
-        while (queue.len() > 0) {
-            // get minimal waiting
-            let min_steps = queue
-                .iter()
-                .map(|pos| distances.get(pos))
-                .filter(|op| op.is_some())
-                .map(|op| op.unwrap())
-                .min()
-                .unwrap();
-            let index = queue
-                .iter()
-                .position(|pos| {
-                    if let Some(steps) = distances.get(pos) {
-                        return steps == min_steps;
-                    }
-                    return false;
-                })
-                .unwrap();
-            let current_pos = queue[index];
-            queue.remove(index);
+        let total_positions = self.area.xlen() * self.area.ylen();
+        let mut visited: Vec<Position> = Vec::new();
 
-            let current_distance = *distances.get(&current_pos).unwrap();
+        while (visited.len() < total_positions) {
+            // get minimal waiting
+            let (current_pos, current_cost) = self.get_minimal_unvisited_cost(&costs, &visited);
 
             let mut next_positions = self.get_neighbours(current_pos);
             if let Some(forbidden_direction) = self.get_forbidden_direction(&parents, &current_pos)
@@ -115,28 +118,26 @@ impl<'a> PathFinder<'a> {
             }
 
             for (next_pos, next_direction) in next_positions {
-                if !parents.contains_key(&next_pos) {
-                    let tile = self.area.get(next_pos);
-                    let distance = current_distance + tile;
-                    let next_distance = *distances.get(&next_pos).unwrap();
-                    if distance < next_distance {
-                        distances.insert(next_pos, distance);
-                        parents.insert(next_pos, current_pos);
-                        queue.push(next_pos);
-                    }
+                let cost = self.area.get(next_pos);
+                let distance = current_cost + cost;
+                let next_distance = *costs.get(&next_pos).unwrap();
+                if distance < next_distance {
+                    costs.insert(next_pos, distance);
+                    parents.insert(next_pos, current_pos);
                 }
             }
+            visited.push(current_pos);
         }
 
-        for x in 0..self.area.xlen() {
-            for y in 0..self.area.ylen() {
+        for y in 0..self.area.ylen() {
+            for x in 0..self.area.xlen() {
                 let pos = (x, y);
-                let d = distances.get(&pos).unwrap();
-                println!("{:?} {}", pos, d);
+                let d = costs.get(&pos).unwrap();
+                // println!("{:?} {}", pos, d);
             }
         }
 
-        let min = distances.get(&stop_pos).unwrap();
+        let min = costs.get(&stop_pos).unwrap();
 
         let mut min_path: Vec<Position> = Vec::new();
         let mut pos = stop_pos;
