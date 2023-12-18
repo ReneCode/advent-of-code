@@ -16,6 +16,84 @@ pub fn day18() {
 
     let lines = io::read_lines("./src/day18/18.data").unwrap();
 
+    part_a(&lines);
+
+    part_b(&lines);
+}
+
+fn color_to_dir_len(color: &str) -> (Direction, i64) {
+    let hex = &color[0..5];
+    let last_char = &color[5..6].chars().nth(0).unwrap();
+
+    let len = i64::from_str_radix(hex, 16).unwrap();
+    let dir = match last_char {
+        '0' => Direction::RIGHT,
+        '1' => Direction::DOWN,
+        '2' => Direction::LEFT,
+        '3' => Direction::UP,
+        _ => panic!("bad direction {last_char}"),
+    };
+    return (dir, len);
+}
+
+fn part_b(lines: &Vec<String>) {
+    let commands = lines
+        .iter()
+        .map(|line| {
+            let tok = parse::to_str(line, ' ');
+            let third = &tok[2];
+            let color = &third[2..=7];
+            return color_to_dir_len(color);
+        })
+        .collect_vec();
+
+    let mut points: Vec<(i64, i64)> = Vec::new();
+    let mut pt: (i64, i64) = (0, 0);
+    points.push(pt);
+    let mut border_len: i64 = 0;
+    for (dir, count) in commands {
+        border_len += count;
+        match dir {
+            Direction::UP => {
+                pt = (pt.0, pt.1 - count);
+                points.push(pt)
+            }
+            Direction::RIGHT => {
+                pt = (pt.0 + count, pt.1);
+                points.push(pt)
+            }
+            Direction::DOWN => {
+                pt = (pt.0, pt.1 + count);
+                points.push(pt)
+            }
+            Direction::LEFT => {
+                pt = (pt.0 - count, pt.1);
+                points.push(pt)
+            }
+
+            _ => panic!("bad direction {:?}", dir),
+        }
+    }
+
+    // area of polygon
+    // https://en.wikipedia.org/wiki/Shoelace_formula
+
+    let mut sum_det = 0;
+    for i in 0..points.len() - 1 {
+        let p1 = points[i];
+        let p2 = points[i + 1];
+        let det = p1.0 * p2.1 - p2.0 * p1.1;
+        sum_det += det;
+    }
+
+    // take care of the border
+    let result_b = sum_det / 2 + border_len / 2 + 1;
+    println!("Result B: {result_b}");
+
+    // println!("{:?}", points);
+}
+
+fn part_a(lines: &Vec<String>) {
     let commands = lines
         .iter()
         .map(|line| {
