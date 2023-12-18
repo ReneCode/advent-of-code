@@ -15,6 +15,18 @@ pub enum Direction {
     LEFT,
 }
 
+impl Direction {
+    pub fn into_iter() -> core::array::IntoIter<Direction, 4> {
+        [
+            Direction::UP,
+            Direction::RIGHT,
+            Direction::DOWN,
+            Direction::LEFT,
+        ]
+        .into_iter()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Matrix<T> {
     elements: Vec<Vec<T>>,
@@ -118,6 +130,16 @@ where
             }
         }
         None
+    }
+
+    pub fn all_positions(&self) -> Vec<Position> {
+        let mut all_pos: Vec<Position> = Vec::new();
+        for y in 0..self.ylen() {
+            for x in 0..self.xlen() {
+                all_pos.push((x, y));
+            }
+        }
+        return all_pos;
     }
 
     pub fn to_string(&self) -> String {
