@@ -6,7 +6,7 @@ use itertools::Itertools;
 
 use crate::util::io;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Compare {
     Nothing,
     LessThan,
@@ -15,28 +15,6 @@ enum Compare {
 
 const ACTION_ACCEPT: &str = "A";
 const ACTION_REJECT: &str = "R";
-
-// #[derive(Debug, Clone)]
-// enum Action {
-//     Accept,
-//     Reject,
-//     Go(String),
-//     CompareAndGo(String),
-// }
-
-// struct ParseActionError;
-// impl FromStr for Action {
-//     type Err = ParseActionError;
-
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         let act = match s {
-//             "A" => Action::Accept,
-//             "R" => Action::Reject,
-//             _ => Action::Go(s.to_string()),
-//         };
-//         Ok(act)
-//     }
-// }
 
 #[derive(Debug)]
 struct Workflow {
@@ -86,7 +64,7 @@ impl FromStr for Workflow {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Rule {
     attribute: String,
     compare: Compare,
@@ -103,10 +81,32 @@ impl Rule {
             _ => panic!("bad rule attribute {}", self.attribute),
         };
 
+        self.prove_value(part_val)
+    }
+
+    fn prove_value(&self, val: i32) -> bool {
         match self.compare {
             Compare::Nothing => return true,
-            Compare::GreaterThan => return part_val > self.value,
-            Compare::LessThan => return part_val < self.value,
+            Compare::GreaterThan => return val > self.value,
+            Compare::LessThan => return val < self.value,
+        }
+    }
+
+    fn get_oposite(&self) -> Rule {
+        match self.compare {
+            Compare::Nothing => panic!("no oposite from compare-nothing"),
+            Compare::GreaterThan => Rule {
+                attribute: self.attribute.clone(),
+                compare: Compare::LessThan,
+                value: self.value + 1,
+                action: "oposite-action".to_string(),
+            },
+            Compare::LessThan => Rule {
+                attribute: self.attribute.clone(),
+                compare: Compare::GreaterThan,
+                value: self.value - 1,
+                action: "oposite-action".to_string(),
+            },
         }
     }
 }
@@ -158,6 +158,9 @@ struct Part {
     s: i32,
 }
 impl Part {
+    fn new(x: i32, m: i32, a: i32, s: i32) -> Self {
+        Part { x, m, a, s }
+    }
     fn total_value(&self) -> i32 {
         self.x + self.m + self.a + self.s
     }
@@ -222,29 +225,170 @@ pub fn day19() {
     // println!("{:?}", workflows);
     // println!("{:?}", parts);
 
-    let result_a: i32 = part_a(&workflows, &parts);
-    println!("Result A: {result_a}")
+    // let result_a: i32 = part_a(&workflows, &parts);
+    // println!("Result A: {result_a}");
+
+    let result_b: u64 = part_b(&workflows);
+    // println!("Result B: {result_b}");
+}
+
+fn part_b(workflows: &HashMap<String, Workflow>) -> u64 {
+    let mut active_rules: Vec<Vec<Rule>> = Vec::new();
+    let mut reject_rules: Vec<Vec<Rule>> = Vec::new();
+    let rules: Vec<Rule> = Vec::new();
+    get_rules(
+        workflows,
+        &mut active_rules,
+        &mut reject_rules,
+        &rules,
+        "in",
+    );
+
+    let mut total_combinations = 0;
+
+    for rules in active_rules {
+        let mut x_rules: Vec<Rule> = Vec::new();
+        let mut m_rules: Vec<Rule> = Vec::new();
+        let mut a_rules: Vec<Rule> = Vec::new();
+        let mut s_rules: Vec<Rule> = Vec::new();
+        for rule in rules {
+            match rule.attribute.as_str() {
+                "x" => x_rules.push(rule.clone()),
+                "m" => m_rules.push(rule.clone()),
+                "a" => a_rules.push(rule.clone()),
+                "s" => s_rules.push(rule.clone()),
+                _ => panic!("bad attribute"),
+            }
+        }
+
+        let mut x_values: Vec<i32> = Vec::new();
+        for x in 1..=4000 {
+            if prove_rules(&x_rules, x) {
+                x_values.push(x)
+            }
+        }
+
+        let mut m_values: Vec<i32> = Vec::new();
+        for m in 1..=4000 {
+            if prove_rules(&m_rules, m) {
+                m_values.push(m)
+            }
+        }
+
+        let mut a_values: Vec<i32> = Vec::new();
+        for a in 1..=4000 {
+            if prove_rules(&a_rules, a) {
+                a_values.push(a)
+            }
+        }
+
+        let mut s_values: Vec<i32> = Vec::new();
+        for s in 1..=4000 {
+            if prove_rules(&s_rules, s) {
+                s_values.push(s)
+            }
+        }
+
+        let combinations = x_values.len() * m_values.len() * a_values.len() * s_values.len();
+        total_combinations += combinations;
+    }
+
+    println!(" ------- {total_combinations}");
+
+    // for r in reject_rules {
+    //     println!("{:?}", r);
+    // }
+
+    // for attribute in ["x", "s", "a", "m"] {
+    //     println!("{:?}", attribute);
+    // }
+
+    println!(
+        "calc {}",
+        calc_result(workflows, &Part::new(536, 2090, 2006, 537))
+    );
+
+    0
+}
+
+fn prove_rules(rules: &Vec<Rule>, val: i32) -> bool {
+    for rule in rules.iter() {
+        if !rule.prove_value(val) {
+            return false;
+        }
+    }
+    return true;
+}
+
+fn get_rules<'a>(
+    workflows: &HashMap<String, Workflow>,
+    active_rules: &mut Vec<Vec<Rule>>,
+    reject_rules: &mut Vec<Vec<Rule>>,
+    rules: &Vec<Rule>,
+    workflow_name: &str,
+) {
+    let workflow = workflows.get(workflow_name).unwrap();
+    let mut workflow_rules = rules.clone();
+    for rule in workflow.rules.iter() {
+        let mut new_rules = workflow_rules.clone();
+        match rule.compare {
+            Compare::GreaterThan | Compare::LessThan => {
+                new_rules.push(rule.clone());
+
+                match rule.action.as_str() {
+                    ACTION_ACCEPT => active_rules.push(new_rules),
+                    ACTION_REJECT => reject_rules.push(new_rules),
+                    _ => get_rules(
+                        workflows,
+                        active_rules,
+                        reject_rules,
+                        &new_rules,
+                        &rule.action,
+                    ),
+                }
+
+                let oposite_rule = rule.get_oposite();
+                workflow_rules.push(oposite_rule);
+            }
+            Compare::Nothing => match rule.action.as_str() {
+                ACTION_ACCEPT => active_rules.push(new_rules),
+                ACTION_REJECT => reject_rules.push(new_rules),
+                _ => get_rules(
+                    workflows,
+                    active_rules,
+                    reject_rules,
+                    &new_rules,
+                    &rule.action,
+                ),
+            },
+        }
+    }
 }
 
 fn part_a(workflows: &HashMap<String, Workflow>, parts: &[Part]) -> i32 {
     let mut total_values = 0;
 
     for part in parts {
-        let mut workflow_name = "in";
-
-        loop {
-            let workflow = workflows.get(workflow_name).unwrap();
-            let act = workflow.process(part);
-            match act {
-                ACTION_ACCEPT => {
-                    total_values += part.total_value();
-                    break;
-                }
-                ACTION_REJECT => break,
-                _ => workflow_name = act,
-            }
-        }
+        total_values += calc_result(workflows, part)
     }
 
     total_values
+}
+
+fn calc_result(workflows: &HashMap<String, Workflow>, part: &Part) -> i32 {
+    let mut workflow_name = "in";
+    let mut total_value: i32 = 0;
+    loop {
+        let workflow = workflows.get(workflow_name).unwrap();
+        let act = workflow.process(part);
+        match act {
+            ACTION_ACCEPT => {
+                total_value += part.total_value();
+                break;
+            }
+            ACTION_REJECT => break,
+            _ => workflow_name = act,
+        }
+    }
+    total_value
 }

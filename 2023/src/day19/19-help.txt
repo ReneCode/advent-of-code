@@ -1,0 +1,16 @@
+[Rule { attribute: "s", compare: LessThan, value: 1351, action: "px" }, Rule { attribute: "a", compare: LessThan, value: 2006, action: "qkq" }, Rule { attribute: "x", compare: LessThan, value: 1416, action: "A" }]
+[Rule { attribute: "s", compare: LessThan, value: 1351, action: "px" }, Rule { attribute: "a", compare: LessThan, value: 2006, action: "qkq" }, Rule { attribute: "x", compare: GreaterThan, value: 1415, action: "oposite-action" }, Rule { attribute: "x", compare: GreaterThan, value: 2662, action: "A" }]
+[Rule { attribute: "s", compare: LessThan, value: 1351, action: "px" }, Rule { attribute: "a", compare: GreaterThan, value: 2005, action: "oposite-action" }, Rule { attribute: "m", compare: GreaterThan, value: 2090, action: "A" }]
+[Rule { attribute: "s", compare: LessThan, value: 1351, action: "px" }, Rule { attribute: "a", compare: GreaterThan, value: 2005, action: "oposite-action" }, Rule { attribute: "m", compare: LessThan, value: 2091, action: "oposite-action" }, Rule { attribute: "s", compare: GreaterThan, value: 536, action: "oposite-action" }, Rule { attribute: "x", compare: LessThan, value: 2441, action: "oposite-action" }]
+[Rule { attribute: "s", compare: GreaterThan, value: 1350, action: "oposite-action" }, Rule { attribute: "s", compare: GreaterThan, value: 2770, action: "qs" }, Rule { attribute: "s", compare: GreaterThan, value: 3448, action: "A" }]
+[Rule { attribute: "s", compare: GreaterThan, value: 1350, action: "oposite-action" }, Rule { attribute: "s", compare: GreaterThan, value: 2770, action: "qs" }, Rule { attribute: "s", compare: LessThan, value: 3449, action: "oposite-action" }, Rule { attribute: "m", compare: GreaterThan, value: 1548, action: "A" }]
+[Rule { attribute: "s", compare: GreaterThan, value: 1350, action: "oposite-action" }, Rule { attribute: "s", compare: GreaterThan, value: 2770, action: "qs" }, Rule { attribute: "s", compare: LessThan, value: 3449, action: "oposite-action" }, Rule { attribute: "m", compare: LessThan, value: 1549, action: "oposite-action" }]
+[Rule { attribute: "s", compare: GreaterThan, value: 1350, action: "oposite-action" }, Rule { attribute: "s", compare: LessThan, value: 2771, action: "oposite-action" }, Rule { attribute: "m", compare: LessThan, value: 1801, action: "hdj" }, Rule { attribute: "m", compare: GreaterThan, value: 838, action: "A" }]
+[Rule { attribute: "s", compare: GreaterThan, value: 1350, action: "oposite-action" }, Rule { attribute: "s", compare: LessThan, value: 2771, action: "oposite-action" }, Rule { attribute: "m", compare: LessThan, value: 1801, action: "hdj" }, Rule { attribute: "m", compare: LessThan, value: 839, action: "oposite-action" }, Rule { attribute: "a", compare: LessThan, value: 1717, action: "oposite-action" }]
+
+----
+
+s < 1351  a < 2006  x < 1416 
+s < 1351  a < 2006  x > 1415  x > 2662
+s < 1351  a > 2005  m > 2090
+s < 1351  a > 2005  m < 2091  s > 536  x < 2441
