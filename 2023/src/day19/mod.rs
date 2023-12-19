@@ -222,17 +222,17 @@ pub fn day19() {
         }
     }
 
-    // println!("{:?}", workflows);
-    // println!("{:?}", parts);
+    let result_a: i32 = part_a(&workflows, &parts);
+    println!("Result A: {result_a}");
 
-    // let result_a: i32 = part_a(&workflows, &parts);
-    // println!("Result A: {result_a}");
-
-    let result_b: u64 = part_b(&workflows);
-    // println!("Result B: {result_b}");
+    let result_b = part_b(&workflows);
+    println!("Result B: {result_b}");
 }
 
-fn part_b(workflows: &HashMap<String, Workflow>) -> u64 {
+fn part_b(workflows: &HashMap<String, Workflow>) -> usize {
+    // traverse the rule-tree and collect all rule-paths
+    // that result "A" result.
+
     let mut active_rules: Vec<Vec<Rule>> = Vec::new();
     let mut reject_rules: Vec<Vec<Rule>> = Vec::new();
     let rules: Vec<Rule> = Vec::new();
@@ -261,6 +261,10 @@ fn part_b(workflows: &HashMap<String, Workflow>) -> u64 {
             }
         }
 
+        // collect all valid values for the 4 dimensions.
+        // tiny brute-force to make it easier to deal with
+        // multiple rules
+        // a little bit hacky, but it works :-)
         let mut x_values: Vec<i32> = Vec::new();
         for x in 1..=4000 {
             if prove_rules(&x_rules, x) {
@@ -293,8 +297,6 @@ fn part_b(workflows: &HashMap<String, Workflow>) -> u64 {
         total_combinations += combinations;
     }
 
-    println!(" ------- {total_combinations}");
-
     // for r in reject_rules {
     //     println!("{:?}", r);
     // }
@@ -303,12 +305,7 @@ fn part_b(workflows: &HashMap<String, Workflow>) -> u64 {
     //     println!("{:?}", attribute);
     // }
 
-    println!(
-        "calc {}",
-        calc_result(workflows, &Part::new(536, 2090, 2006, 537))
-    );
-
-    0
+    total_combinations
 }
 
 fn prove_rules(rules: &Vec<Rule>, val: i32) -> bool {
