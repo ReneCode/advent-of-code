@@ -13,18 +13,50 @@ enum Compare {
     GreaterThan,
 }
 
-#[derive(Debug)]
-enum Action {
-    Accept,
-    Reject,
-    Go(String),
-    CompareAndGo(String),
-}
+const ACTION_ACCEPT: &str = "A";
+const ACTION_REJECT: &str = "R";
+
+// #[derive(Debug, Clone)]
+// enum Action {
+//     Accept,
+//     Reject,
+//     Go(String),
+//     CompareAndGo(String),
+// }
+
+// struct ParseActionError;
+// impl FromStr for Action {
+//     type Err = ParseActionError;
+
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         let act = match s {
+//             "A" => Action::Accept,
+//             "R" => Action::Reject,
+//             _ => Action::Go(s.to_string()),
+//         };
+//         Ok(act)
+//     }
+// }
 
 #[derive(Debug)]
 struct Workflow {
     name: String,
     rules: Vec<Rule>,
+}
+impl Workflow {
+    fn process(&self, part: &Part) -> &str {
+        for rule in self.rules.iter() {
+            match rule.compare {
+                Compare::Nothing => return &rule.action,
+                Compare::GreaterThan | Compare::LessThan => {
+                    if rule.prove(part) {
+                        return &rule.action;
+                    }
+                }
+            }
+        }
+        panic!("process does not find action")
+    }
 }
 
 struct ParseWorkflowError;
@@ -59,7 +91,24 @@ struct Rule {
     attribute: String,
     compare: Compare,
     value: i32,
-    action: Action,
+    action: String,
+}
+impl Rule {
+    fn prove(&self, part: &Part) -> bool {
+        let part_val = match self.attribute.as_str() {
+            "x" => part.x,
+            "m" => part.m,
+            "a" => part.a,
+            "s" => part.s,
+            _ => panic!("bad rule attribute {}", self.attribute),
+        };
+
+        match self.compare {
+            Compare::Nothing => return true,
+            Compare::GreaterThan => return part_val > self.value,
+            Compare::LessThan => return part_val < self.value,
+        }
+    }
 }
 
 struct ParseRuleError;
@@ -72,17 +121,11 @@ impl FromStr for Rule {
         let mut tok = s.split(':').collect_vec();
         if tok.len() == 1 {
             let name = tok[0];
-            let mut action: Action = Action::Go(name.to_string());
-            if name == "A" {
-                action = Action::Accept
-            } else if name == "R" {
-                action = Action::Reject
-            }
             return Ok(Rule {
                 attribute: String::new(),
                 compare: Compare::Nothing,
                 value: 0,
-                action: action,
+                action: name.to_string(),
             });
         } else {
             let action = tok[1];
@@ -101,7 +144,7 @@ impl FromStr for Rule {
                 attribute: attribute.to_string(),
                 compare: compare,
                 value: value,
-                action: Action::CompareAndGo(action.to_string()),
+                action: action.to_string(),
             });
         }
     }
@@ -113,6 +156,11 @@ struct Part {
     m: i32,
     a: i32,
     s: i32,
+}
+impl Part {
+    fn total_value(&self) -> i32 {
+        self.x + self.m + self.a + self.s
+    }
 }
 
 struct ParsePartError;
@@ -149,7 +197,7 @@ impl FromStr for Part {
 pub fn day19() {
     println!("hello day19");
 
-    let lines = io::read_lines("./src/day19/19-example.data").unwrap();
+    let lines = io::read_lines("./src/day19/19.data").unwrap();
     let mut workflows: HashMap<String, Workflow> = HashMap::new();
     let mut parts: Vec<Part> = Vec::new();
     let mut parse_workflow = true;
@@ -171,6 +219,32 @@ pub fn day19() {
         }
     }
 
-    println!("{:?}", workflows);
-    println!("{:?}", parts);
+    // println!("{:?}", workflows);
+    // println!("{:?}", parts);
+
+    let result_a: i32 = part_a(&workflows, &parts);
+    println!("Result A: {result_a}")
+}
+
+fn part_a(workflows: &HashMap<String, Workflow>, parts: &[Part]) -> i32 {
+    let mut total_values = 0;
+
+    for part in parts {
+        let mut workflow_name = "in";
+
+        loop {
+            let workflow = workflows.get(workflow_name).unwrap();
+            let act = workflow.process(part);
+            match act {
+                ACTION_ACCEPT => {
+                    total_values += part.total_value();
+                    break;
+                }
+                ACTION_REJECT => break,
+                _ => workflow_name = act,
+            }
+        }
+    }
+
+    total_values
 }
