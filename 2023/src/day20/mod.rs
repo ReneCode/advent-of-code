@@ -18,10 +18,8 @@ enum ModuleType {
 }
 
 struct Module {
-    name: String,
     module_type: ModuleType,
     destinations: Vec<String>,
-    current_val: char,
     inputs: Vec<String>,
 }
 
@@ -32,36 +30,73 @@ pub fn day20() {
 
     let mut modules = read_modules(&lines);
 
-    let (total_low, total_high) = part_a(&mut modules);
+    // let (total_low, total_high) = part_a(&modules);
+    // println!(
+    //     "Result A: {total_low} {total_high} -> {}",
+    //     total_low * total_high
+    // );
 
-    println!(
-        "Result A: {total_low} {total_high} -> {}",
-        total_low * total_high
-    );
+    part_b(&modules);
 }
 
-fn part_a(modules: &mut HashMap<String, Module>) -> (usize, usize) {
+fn part_b(modules: &HashMap<String, Module>) {
     let mut current_values: HashMap<String, char> = HashMap::new();
     for (name, module) in modules.iter() {
-        current_values.insert(name.clone(), module.current_val);
+        current_values.insert(name.clone(), LOW);
+    }
+
+    let mut round = 0;
+    loop {
+        round += 1;
+        let (l, h) = part_round(modules, &mut current_values);
+        if (l == 0 && h == 0) {
+            println!("Result B: {round}");
+            break;
+        }
+        if round % 10000 == 0 {
+            println!("round: {round}");
+        }
+    }
+}
+
+fn part_a(modules: &HashMap<String, Module>) -> (usize, usize) {
+    let mut current_values: HashMap<String, char> = HashMap::new();
+    for (name, module) in modules.iter() {
+        current_values.insert(name.clone(), LOW);
     }
 
     let mut total_low = 0;
     let mut total_high = 0;
     for i in 0..1000 {
-        let (low_count, high_count) = part_a_round(modules, &mut current_values);
+        let (low_count, high_count) = part_round(modules, &mut current_values);
 
         println!("Result A: {low_count} {high_count}");
         total_low += low_count;
         total_high += high_count;
     }
     (total_low, total_high)
-
-    // part_a_round(modules, &mut current_values)
 }
 
-fn part_a_round(
-    modules: &mut HashMap<String, Module>,
+// fn part_b(modules: &HashMap<String, Module>) -> (usize, usize) {
+//     let mut current_values: HashMap<String, char> = HashMap::new();
+//     for (name, module) in modules.iter() {
+//         current_values.insert(name.clone(), LOW);
+//     }
+
+//     let mut total_low = 0;
+//     let mut total_high = 0;
+//     for i in 0..10000 {
+//         let (low_count, high_count) = part_a_round(modules, &mut current_values);
+
+//         println!("Result B: {i}");
+//         total_low += low_count;
+//         total_high += high_count;
+//     }
+//     (total_low, total_high)
+// }
+
+fn part_round(
+    modules: &HashMap<String, Module>,
     current_values: &mut HashMap<String, char>,
 ) -> (usize, usize) {
     let mut inputs: Vec<(String, char)> = Vec::new();
@@ -76,9 +111,18 @@ fn part_a_round(
         let work = inputs.clone();
         inputs.clear();
         for (name, input) in work {
-            if name == "output" || name == "rx" {
+            if name == "output" {
                 continue;
             }
+
+            if name == "rx" {
+                if input == HIGH {
+                    continue;
+                } else {
+                    return (0, 0);
+                }
+            }
+
             let module = modules.get(&name).unwrap();
             match module.module_type {
                 ModuleType::BROADCAST => {
@@ -149,10 +193,8 @@ fn read_modules(lines: &Vec<String>) -> HashMap<String, Module> {
 
         if name == "broadcaster" {
             let broadcaster = Module {
-                name: name.to_string(),
                 module_type: ModuleType::BROADCAST,
                 destinations: all_dest,
-                current_val: EMPTY,
                 inputs: Vec::new(),
             };
             modules.insert(name.to_string(), broadcaster);
@@ -163,10 +205,8 @@ fn read_modules(lines: &Vec<String>) -> HashMap<String, Module> {
                 '%' => {
                     // flipflop
                     let flipflop = Module {
-                        name: name.to_string(),
                         module_type: ModuleType::FLIPFLOP,
                         destinations: all_dest,
-                        current_val: LOW,
                         inputs: Vec::new(),
                     };
                     modules.insert(name.to_string(), flipflop);
@@ -174,10 +214,8 @@ fn read_modules(lines: &Vec<String>) -> HashMap<String, Module> {
                 '&' => {
                     // conjunction
                     let conjuction = Module {
-                        name: name.to_string(),
                         module_type: ModuleType::CONJUNCTION,
                         destinations: all_dest,
-                        current_val: LOW,
                         inputs: Vec::new(),
                     };
                     modules.insert(name.to_string(), conjuction);
