@@ -13,8 +13,6 @@ use crate::util::{
     parse,
 };
 
-type PositionStepItem = (Position, i32);
-
 struct PathFinder<'a> {
     area: &'a Matrix<i32>,
     // waiting_items: Vec<PositionStepItem>,

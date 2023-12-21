@@ -8,7 +8,6 @@ use crate::util::{io, parse};
 
 const LOW: char = 'L';
 const HIGH: char = 'H';
-const EMPTY: char = ' ';
 
 #[derive(PartialEq)]
 enum ModuleType {
@@ -30,11 +29,11 @@ pub fn day20() {
 
     let mut modules = read_modules(&lines);
 
-    // let (total_low, total_high) = part_a(&modules);
-    // println!(
-    //     "Result A: {total_low} {total_high} -> {}",
-    //     total_low * total_high
-    // );
+    let (total_low, total_high) = part_a(&modules);
+    println!(
+        "Result A: {total_low} {total_high} -> {}",
+        total_low * total_high
+    );
 
     part_b(&modules);
 }

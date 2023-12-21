@@ -158,9 +158,6 @@ struct Part {
     s: i32,
 }
 impl Part {
-    fn new(x: i32, m: i32, a: i32, s: i32) -> Self {
-        Part { x, m, a, s }
-    }
     fn total_value(&self) -> i32 {
         self.x + self.m + self.a + self.s
     }
