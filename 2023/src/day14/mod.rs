@@ -46,7 +46,7 @@ pub fn day14() {
 
     for (y, line) in lines.iter().enumerate() {
         for (x, c) in line.chars().enumerate() {
-            orginal_area.set((x, y), &c);
+            orginal_area.set((x, y), c);
         }
     }
 
@@ -120,8 +120,8 @@ fn move_rocks_up(area: &mut Area) {
                         }
                     }
                     if found {
-                        area.set((x, y), &EMPTY);
-                        area.set((x, ypos), &ROCK);
+                        area.set((x, y), EMPTY);
+                        area.set((x, ypos), ROCK);
                     }
                 }
                 _ => {}

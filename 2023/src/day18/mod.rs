@@ -148,7 +148,7 @@ fn part_a(lines: &Vec<String>) {
     // normalize area to start on index (0,0)
     let mut area = Matrix::new(max_x - min_x + 1, max_y - min_y + 1, EMPTY);
     for (x, y) in holes {
-        area.set((x - min_x, y - min_y), &HOLE);
+        area.set((x - min_x, y - min_y), HOLE);
     }
 
     let mut start_pos = (0, 1);
@@ -174,10 +174,10 @@ fn flood_fill(area: &mut Matrix<char>, pos: Position) {
         return;
     }
 
-    area.set(pos, &HOLE);
+    area.set(pos, HOLE);
 
     for dir in Direction::into_iter() {
-        if let Some(next_pos) = area.next_pos(pos, &dir) {
+        if let Some(next_pos) = area.next_pos(pos, dir) {
             flood_fill(area, next_pos);
         }
     }

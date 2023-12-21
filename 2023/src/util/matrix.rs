@@ -76,10 +76,10 @@ where
         self.ylen
     }
 
-    pub fn set(&mut self, pos: (usize, usize), val: &T) {
+    pub fn set(&mut self, pos: (usize, usize), val: T) {
         // self.check_pos(pos);
         let old = self.elements[pos.1].get_mut(pos.0).unwrap();
-        *old = *val;
+        *old = val;
     }
     pub fn get(&self, pos: (usize, usize)) -> &T {
         // self.check_pos(pos);
@@ -106,7 +106,31 @@ where
         new_matrix
     }
 
-    pub fn next_pos(&self, pos: (usize, usize), direction: &Direction) -> Option<(usize, usize)> {
+    pub fn get_neighbours<F>(&self, pos: &Position, f: F) -> Vec<Position>
+    where
+        F: Fn(&T) -> bool,
+    {
+        let mut result: Vec<Position> = Vec::new();
+        for dir in [
+            Direction::UP,
+            Direction::RIGHT,
+            Direction::DOWN,
+            Direction::LEFT,
+        ]
+        .iter()
+        {
+            if let Some(p) = self.next_pos(*pos, *dir) {
+                let val = self.get(p);
+                if f(val) {
+                    result.push(p);
+                }
+            }
+        }
+
+        result
+    }
+
+    pub fn next_pos(&self, pos: (usize, usize), direction: Direction) -> Option<(usize, usize)> {
         match direction {
             Direction::RIGHT => {
                 if pos.0 + 1 < self.xlen {

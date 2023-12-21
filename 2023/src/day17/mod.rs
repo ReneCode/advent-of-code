@@ -155,16 +155,16 @@ impl<'a> PathFinder<'a> {
 
     fn get_neighbours(&self, pos: Position) -> Vec<(Position, Direction)> {
         let mut result: Vec<(Position, Direction)> = Vec::new();
-        if let Some(next) = self.area.next_pos(pos, &Direction::UP) {
+        if let Some(next) = self.area.next_pos(pos, Direction::UP) {
             result.push((next, Direction::UP));
         }
-        if let Some(next) = self.area.next_pos(pos, &Direction::RIGHT) {
+        if let Some(next) = self.area.next_pos(pos, Direction::RIGHT) {
             result.push((next, Direction::RIGHT));
         }
-        if let Some(next) = self.area.next_pos(pos, &Direction::DOWN) {
+        if let Some(next) = self.area.next_pos(pos, Direction::DOWN) {
             result.push((next, Direction::DOWN));
         }
-        if let Some(next) = self.area.next_pos(pos, &Direction::LEFT) {
+        if let Some(next) = self.area.next_pos(pos, Direction::LEFT) {
             result.push((next, Direction::LEFT));
         }
         result
@@ -181,7 +181,7 @@ pub fn day17() {
     for (y, line) in lines.iter().enumerate() {
         for (x, c) in line.chars().enumerate() {
             let nr = c as i32 - '0' as i32;
-            area.set((x, y), &nr);
+            area.set((x, y), nr);
         }
     }
 

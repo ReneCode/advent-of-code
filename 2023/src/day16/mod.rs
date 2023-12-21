@@ -19,7 +19,7 @@ pub fn day16() {
     let mut area: Matrix<char> = Matrix::new(xlen, ylen, ',');
     for (y, line) in lines.iter().enumerate() {
         for (x, c) in line.chars().enumerate() {
-            area.set((x, y), &c);
+            area.set((x, y), c);
         }
     }
 
@@ -66,7 +66,7 @@ fn solve(area: &Matrix<char>, start_pos: (usize, usize), start_direction: Direct
             visited.insert((pos, direction));
             match tile {
                 '.' => {
-                    if let Some(next_pos) = area.next_pos(pos, &direction) {
+                    if let Some(next_pos) = area.next_pos(pos, direction) {
                         pos = next_pos;
                     } else {
                         go_on = false;
@@ -74,10 +74,10 @@ fn solve(area: &Matrix<char>, start_pos: (usize, usize), start_direction: Direct
                 }
                 '-' => match direction {
                     Direction::UP | Direction::DOWN => {
-                        if let Some(next_pos) = area.next_pos(pos, &Direction::RIGHT) {
+                        if let Some(next_pos) = area.next_pos(pos, Direction::RIGHT) {
                             continue_here.push((next_pos, Direction::RIGHT));
                         }
-                        if let Some(next_pos) = area.next_pos(pos, &Direction::LEFT) {
+                        if let Some(next_pos) = area.next_pos(pos, Direction::LEFT) {
                             pos = next_pos;
                             direction = Direction::LEFT;
                         } else {
@@ -85,7 +85,7 @@ fn solve(area: &Matrix<char>, start_pos: (usize, usize), start_direction: Direct
                         }
                     }
                     Direction::LEFT | Direction::RIGHT => {
-                        if let Some(next_pos) = area.next_pos(pos, &direction) {
+                        if let Some(next_pos) = area.next_pos(pos, direction) {
                             pos = next_pos;
                         } else {
                             go_on = false;
@@ -94,10 +94,10 @@ fn solve(area: &Matrix<char>, start_pos: (usize, usize), start_direction: Direct
                 },
                 '|' => match direction {
                     Direction::LEFT | Direction::RIGHT => {
-                        if let Some(next_pos) = area.next_pos(pos, &Direction::DOWN) {
+                        if let Some(next_pos) = area.next_pos(pos, Direction::DOWN) {
                             continue_here.push((next_pos, Direction::DOWN));
                         }
-                        if let Some(next_pos) = area.next_pos(pos, &Direction::UP) {
+                        if let Some(next_pos) = area.next_pos(pos, Direction::UP) {
                             pos = next_pos;
                             direction = Direction::UP;
                         } else {
@@ -105,7 +105,7 @@ fn solve(area: &Matrix<char>, start_pos: (usize, usize), start_direction: Direct
                         }
                     }
                     Direction::UP | Direction::DOWN => {
-                        if let Some(next_pos) = area.next_pos(pos, &direction) {
+                        if let Some(next_pos) = area.next_pos(pos, direction) {
                             pos = next_pos;
                         } else {
                             go_on = false;
@@ -120,7 +120,7 @@ fn solve(area: &Matrix<char>, start_pos: (usize, usize), start_direction: Direct
                         (Direction::UP, Direction::RIGHT),
                     ]);
                     let next_direction = continue_direction.get(&direction).unwrap();
-                    if let Some(next_pos) = area.next_pos(pos, next_direction) {
+                    if let Some(next_pos) = area.next_pos(pos, *next_direction) {
                         pos = next_pos;
                         direction = *next_direction;
                     } else {
@@ -135,7 +135,7 @@ fn solve(area: &Matrix<char>, start_pos: (usize, usize), start_direction: Direct
                         (Direction::UP, Direction::LEFT),
                     ]);
                     let next_direction = continue_direction.get(&direction).unwrap();
-                    if let Some(next_pos) = area.next_pos(pos, next_direction) {
+                    if let Some(next_pos) = area.next_pos(pos, *next_direction) {
                         pos = next_pos;
                         direction = *next_direction;
                     } else {
