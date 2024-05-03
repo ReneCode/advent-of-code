@@ -1,6 +1,6 @@
 // day06
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use itertools::Itertools;
 
@@ -10,15 +10,23 @@ pub fn day06() {
     let lines = io::read_lines("06.data").unwrap();
     let one_string = lines.iter().join("\n");
     let groups: Vec<&str> = one_string.split("\n\n").collect();
-    let questions: Vec<usize> = groups
+    let any_questions: Vec<usize> = groups
         .iter()
-        .map(|group| get_questions_from_group(group))
+        .map(|group| get_any_person_answered(group))
         .collect();
-    let sum_questions: usize = questions.iter().sum();
-    println!("A: sum of questions: {}", sum_questions);
+    let sum_any_questions: usize = any_questions.iter().sum();
+    println!("A: sum of any questions: {}", sum_any_questions);
+
+    let all_questions: Vec<usize> = groups
+        .iter()
+        .map(|group| get_all_person_answered(group))
+        .collect();
+    let sum_all_questions: usize = all_questions.iter().sum();
+
+    println!("B: sum of all questions: {}", sum_all_questions);
 }
 
-fn get_questions_from_group(group: &str) -> usize {
+fn get_any_person_answered(group: &str) -> usize {
     let persons: Vec<&str> = group.split("\n").collect();
     let mut questions: HashSet<char> = HashSet::new();
     for person in persons {
@@ -27,4 +35,25 @@ fn get_questions_from_group(group: &str) -> usize {
         }
     }
     questions.len()
+}
+
+fn get_all_person_answered(group: &str) -> usize {
+    let persons: Vec<&str> = group.split("\n").collect();
+    let all_questions: HashSet<char> = persons.iter().map(|p| p.chars()).flatten().collect();
+    let mut count: usize = 0;
+
+    for question in all_questions {
+        let mut answered = true;
+        for person in persons.iter() {
+            if !person.contains(question) {
+                answered = false;
+                break;
+            }
+        }
+        if answered {
+            // answered by all persons
+            count += 1;
+        }
+    }
+    count
 }
