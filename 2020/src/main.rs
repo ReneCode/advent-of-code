@@ -6,9 +6,10 @@ mod day03;
 mod day04;
 mod day05;
 mod day06;
+mod day07;
 mod util;
 
-const CURRENT_DAY: i32 = 6;
+const CURRENT_DAY: i32 = 7;
 
 fn main() {
     println!("Hello Advent of Code 2020!");
@@ -20,6 +21,7 @@ fn main() {
         4 => day04::day04(),
         5 => day05::day05(),
         6 => day06::day06(),
+        7 => day07::day07(),
         _ => println!("ups, no solution for day {CURRENT_DAY}"),
     }
 }
