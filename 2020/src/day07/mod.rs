@@ -1,9 +1,6 @@
 // day07
 
-use std::{
-    collections::{HashMap, HashSet},
-    hash::Hash,
-};
+use std::collections::HashSet;
 
 use crate::util::io;
 
@@ -20,6 +17,27 @@ pub fn day07() {
 
     let colors = collect_base_colors(&rules, "shiny gold");
     println!("A: {:?}", colors.len());
+
+    let count_bags = count_bags(&rules, "shiny gold");
+    println!("B: {:?}", count_bags);
+}
+
+fn count_bags(rules: &Vec<Rule>, color: &str) -> u32 {
+    let rule = rules.iter().find(|r| r.color == color).unwrap();
+    recursive_count_bags(rules, 1, rule)
+}
+
+fn recursive_count_bags(rules: &Vec<Rule>, count: u32, rule: &Rule) -> u32 {
+    let mut all_count = 0;
+    for (child_color, child_count) in &rule.contains {
+        all_count += count * child_count;
+        if let Some(sub_rule) = rules.iter().find(|r| r.color == *child_color) {
+            let c = recursive_count_bags(rules, count * child_count, sub_rule);
+            all_count += c;
+        }
+    }
+
+    all_count
 }
 
 fn collect_base_colors(rules: &Vec<Rule>, color: &str) -> HashSet<String> {
