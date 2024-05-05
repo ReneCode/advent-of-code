@@ -1,6 +1,9 @@
 // day07
 
-use std::{collections::HashSet, hash::Hash};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::Hash,
+};
 
 use crate::util::io;
 
@@ -15,24 +18,24 @@ pub fn day07() {
 
     let rules = parse_rules(&lines);
 
-    let colors = get_all_base_colors(&rules, "shiny gold");
+    let colors = collect_base_colors(&rules, "shiny gold");
     println!("A: {:?}", colors.len());
 }
 
-fn get_all_base_colors(rules: &Vec<Rule>, search_color: &str) -> HashSet<String> {
-    let mut base_colors: HashSet<String> = HashSet::new();
-    let mut colors = get_base_colors(rules, search_color);
-    while !colors.is_empty() {
-        let mut new_colors = Vec::new();
-        for color in colors {
-            base_colors.insert(color.clone());
+fn collect_base_colors(rules: &Vec<Rule>, color: &str) -> HashSet<String> {
+    let mut all_base_colors: HashSet<String> = HashSet::new();
 
-            let mut cs = get_base_colors(rules, &color);
-            new_colors.append(&mut cs);
+    let base_colors = get_base_colors(rules, color);
+
+    for color in base_colors {
+        all_base_colors.insert(color.clone());
+        let local_base_colors = collect_base_colors(rules, &color);
+        for c in local_base_colors.iter() {
+            all_base_colors.insert(c.clone());
         }
-        colors = new_colors;
     }
-    base_colors
+
+    all_base_colors
 }
 
 fn get_base_colors(rules: &Vec<Rule>, search_color: &str) -> Vec<String> {
