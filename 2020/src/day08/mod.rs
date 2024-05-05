@@ -4,7 +4,7 @@ use std::collections::HashSet;
 
 use crate::util::io;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Instruction {
     operation: String,
     argument: i32,
@@ -50,6 +50,20 @@ impl CPU {
             // println!("PC:{} acc:{}", self.program_counter, self.accumulator);
         }
     }
+
+    fn run_until_end(&mut self) -> bool {
+        let mut visited: HashSet<i32> = HashSet::new();
+
+        while !visited.contains(&self.program_counter) {
+            visited.insert(self.program_counter);
+            self.step();
+            if self.program_counter == self.instructions.len() as i32 {
+                return true;
+            }
+        }
+        // sorry, infinite loop detected
+        false
+    }
 }
 
 pub fn day08() {
@@ -68,11 +82,48 @@ pub fn day08() {
         })
         .collect();
 
+    part1(&instructions);
+
+    part2(&instructions);
+}
+
+fn part2(instructions: &Vec<Instruction>) {
+    for i in 0..instructions.len() {
+        let mut cpu = CPU {
+            accumulator: 0,
+            program_counter: 0,
+            instructions: instructions.clone(),
+        };
+
+        match cpu.instructions[i].operation.as_str() {
+            "nop" => {
+                cpu.instructions[i].operation = "jmp".to_string();
+                if cpu.run_until_end() {
+                    println!("B: {}", cpu.acc());
+                    break;
+                }
+                cpu.instructions[i].operation = "nop".to_string();
+            }
+            "jmp" => {
+                cpu.instructions[i].operation = "nop".to_string();
+                if cpu.run_until_end() {
+                    println!("B: {}", cpu.acc());
+                    break;
+                }
+                cpu.instructions[i].operation = "jmp".to_string();
+            }
+            _ => {}
+        }
+    }
+}
+
+fn part1(instructions: &Vec<Instruction>) {
     let mut cpu = CPU {
         accumulator: 0,
         program_counter: 0,
-        instructions,
+        instructions: instructions.clone(),
     };
+
     cpu.run_until_loop();
     println!("A: {}", cpu.acc());
 }
