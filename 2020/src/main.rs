@@ -10,6 +10,7 @@ mod day07;
 mod day08;
 mod day09;
 mod day10;
+mod day17;
 mod util;
 
 const CURRENT_DAY: i32 = 10;
@@ -28,6 +29,7 @@ fn main() {
         8 => day08::day08(),
         9 => day09::day09(),
         10 => day10::day10(),
+        17 => day17::day17(),
         _ => println!("ups, no solution for day {CURRENT_DAY}"),
     }
 }
