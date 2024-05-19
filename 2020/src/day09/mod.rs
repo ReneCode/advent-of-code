@@ -12,9 +12,27 @@ pub fn day09() {
         .map(|line| line.parse::<i64>().unwrap())
         .collect();
 
-    if let Some(invalid_number) = find_invalid_number(&numbers, 25) {
-        println!("Invalid number: {}", invalid_number)
+    let invalid_number = find_invalid_number(&numbers, 25).unwrap();
+    println!("A: Invalid number: {}", invalid_number);
+
+    let encryption_weakness = find_encryption_weakness(&numbers, invalid_number).unwrap();
+    println!("B: Encryption weakness: {}", encryption_weakness);
+}
+
+fn find_encryption_weakness(numbers: &Vec<i64>, invalid_number: i64) -> Option<i64> {
+    for i in 0..numbers.len() {
+        let mut sum = numbers[i];
+        for j in i + 1..numbers.len() {
+            sum += numbers[j];
+            if sum == invalid_number {
+                let min = numbers[i..j].iter().min().unwrap();
+                let max = numbers[i..j].iter().max().unwrap();
+                let result = min + max;
+                return Some(result);
+            }
+        }
     }
+    return None;
 }
 
 fn find_invalid_number(numbers: &Vec<i64>, preamble_len: usize) -> Option<i64> {
