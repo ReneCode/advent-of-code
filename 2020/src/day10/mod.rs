@@ -5,7 +5,7 @@ use std::{collections::HashMap, vec};
 use crate::util::io;
 
 pub fn day10() {
-    let lines = io::read_lines("10-example.data").unwrap();
+    let lines = io::read_lines("10.data").unwrap();
 
     let numbers: Vec<i64> = lines
         .iter()
@@ -44,9 +44,10 @@ fn calc_steps(numbers: &Vec<i64>) -> i64 {
 
 fn part2(numbers: &Vec<i64>) -> i64 {
     let mut sorted = numbers.clone();
+    // event in the first step you can have different possibilities
+    // so we do not start on the first number but on 0
+    sorted.push(0);
     sorted.sort();
-
-    let mut count: u64 = 0;
 
     let mut steps: HashMap<i64, i64> = HashMap::new();
     for nr in sorted.iter().rev() {
@@ -62,10 +63,9 @@ fn part2(numbers: &Vec<i64>) -> i64 {
         }
     }
 
-    for nr in sorted.iter() {
-        println!("{}: {}", nr, steps.get(nr).unwrap());
-    }
-    // println!("{:?}", steps);
+    // for nr in sorted.iter() {
+    //     println!("{}: {}", nr, steps.get(nr).unwrap());
+    // }
 
     let first_nr = sorted[0];
     let result = steps.get(&first_nr).unwrap();
