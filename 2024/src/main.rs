@@ -28,7 +28,7 @@ mod util;
 const CURRENT_DAY: i32 = 3;
 
 fn main() {
-    println!("Hello Advent of Code 2023!");
+    println!("Hello Advent of Code 2024!");
 
     match CURRENT_DAY {
         1 => day01::day01(),
