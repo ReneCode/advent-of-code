@@ -7,7 +7,7 @@ pub fn day01() {
     let mut right: Vec<i32> = Vec::new();
 
     for line in lines {
-        let tok: Vec<&str> = line.split(" ").filter(|t| t.len() > 0).collect();
+        let tok: Vec<&str> = line.split(" ").filter(|t| !t.is_empty()).collect();
         let number = tok[0].trim().parse::<i32>().unwrap();
         left.push(number);
         let number = tok[1].trim().parse::<i32>().unwrap();
@@ -28,7 +28,7 @@ pub fn day01() {
     let mut count = 0;
     for nr in left {
         let similarity = right.iter().filter(|n| **n == nr).count() as i32;
-        count += (similarity * nr);
+        count += similarity * nr;
     }
     println!("Part 2: {}", count);
 }

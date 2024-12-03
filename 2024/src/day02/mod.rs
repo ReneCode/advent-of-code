@@ -19,7 +19,7 @@ pub fn day02() {
     println!("Damped safe levels: {}", count_damped_safe);
 }
 
-fn is_safe(level: &Vec<i32>) -> bool {
+fn is_safe(level: &[i32]) -> bool {
     let down = level[0] > level[1];
     for i in 0..level.len() - 1 {
         if (down && level[i] <= level[i + 1]) || (!down && level[i] >= level[i + 1]) {
@@ -39,7 +39,7 @@ fn is_safe(level: &Vec<i32>) -> bool {
     true
 }
 
-fn is_damped_safe(level: &Vec<i32>) -> bool {
+fn is_damped_safe(level: &[i32]) -> bool {
     if is_safe(level) {
         return true;
     }
