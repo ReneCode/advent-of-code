@@ -26,13 +26,11 @@ pub fn day04() {
     let size = line_len.max(line_count);
     for x_start in 0 - (size - 1)..size as i64 {
         let mut diagonal_line = String::new();
-        let mut y = 0;
-        for x in x_start..x_start + size {
-            if x >= 0 && x < line_len && y >= 0 && y < line_count {
-                let c = lines[y as usize].chars().nth(x as usize).unwrap();
+        for (y, x) in (x_start..x_start + size).enumerate() {
+            if x >= 0 && x < line_len && (y as i64) < line_count {
+                let c = lines[y].chars().nth(x as usize).unwrap();
                 diagonal_line.push(c);
             }
-            y += 1;
         }
         if !diagonal_line.is_empty() {
             right_down_lines.push(diagonal_line);
