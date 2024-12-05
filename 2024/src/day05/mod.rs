@@ -8,6 +8,12 @@ struct Rule {
     y: i64,
 }
 
+impl Rule {
+    fn is_valid(&self, a: i64, b: i64) -> bool {
+        (a == self.x && b == self.y) || (a == self.y && b == self.x)
+    }
+}
+
 struct Update {
     pages: Vec<i64>,
 }
@@ -45,6 +51,7 @@ pub fn day05() {
         .collect_vec();
 
     part1(&rules, &updates);
+    part2(&rules, &updates);
 }
 
 fn part1(rules: &Vec<Rule>, updates: &Vec<Update>) {
@@ -55,6 +62,17 @@ fn part1(rules: &Vec<Rule>, updates: &Vec<Update>) {
         }
     }
     println!("Day 05, part 1: {}", sum);
+}
+
+fn part2(rules: &Vec<Rule>, updates: &Vec<Update>) {
+    let mut sum = 0;
+    for update in updates {
+        if !is_update_ok(update, rules) {
+            let fixed_update = fix_update(update, rules);
+            sum += fixed_update.middle_page();
+        }
+    }
+    println!("Day 05, part 2: {}", sum);
 }
 
 fn is_update_ok(update: &Update, rules: &Vec<Rule>) -> bool {
@@ -72,4 +90,29 @@ fn is_update_ok(update: &Update, rules: &Vec<Rule>) -> bool {
         }
     }
     true
+}
+
+fn fix_update(update: &Update, rules: &Vec<Rule>) -> Update {
+    let pages_set: HashSet<i64> = HashSet::from_iter(update.pages.iter().map(|i| *i));
+
+    let relevant_rules = rules
+        .iter()
+        .filter(|r| pages_set.contains(&r.x) && pages_set.contains(&r.y))
+        .collect_vec();
+
+    let mut pages: Vec<i64> = Vec::from_iter(pages_set.iter().map(|i| *i));
+
+    // sort the pages based on the rules
+    pages.sort_by(|a, b| {
+        let rule = relevant_rules.iter().find(|r| r.is_valid(*a, *b)).unwrap();
+        if rule.x == *a {
+            return std::cmp::Ordering::Less;
+        }
+        if rule.y == *a {
+            return std::cmp::Ordering::Greater;
+        }
+        std::cmp::Ordering::Equal
+    });
+
+    Update { pages }
 }
