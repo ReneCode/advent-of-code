@@ -56,7 +56,9 @@ pub fn day04() {
     }
     total_found += find_all(right_up_lines);
 
-    println!("Day 04: {}", total_found);
+    println!("Day 04, part 1: {}", total_found);
+
+    part2(&lines);
 }
 
 fn find_all(lines: Vec<String>) -> usize {
@@ -69,4 +71,45 @@ fn find_all(lines: Vec<String>) -> usize {
         count += re_rev.find_iter(line).count();
     }
     count
+}
+fn part2(lines: &Vec<String>) {
+    fn get_count(lines: &Vec<String>, pattern: &str) -> usize {
+        let line_len = lines[0].len();
+        let line_count = lines.len();
+        let mut count = 0;
+        for x in 0..line_len - 2 {
+            for y in 0..line_count - 2 {
+                let c = lines[y].chars().nth(x).unwrap();
+                if c != pattern.chars().nth(0).unwrap() {
+                    continue;
+                }
+                let c = lines[y].chars().nth(x + 2).unwrap();
+                if c != pattern.chars().nth(1).unwrap() {
+                    continue;
+                }
+                let c = lines[y + 1].chars().nth(x + 1).unwrap();
+                if c != pattern.chars().nth(2).unwrap() {
+                    continue;
+                }
+                let c = lines[y + 2].chars().nth(x).unwrap();
+                if c != pattern.chars().nth(3).unwrap() {
+                    continue;
+                }
+                let c = lines[y + 2].chars().nth(x + 2).unwrap();
+                if c != pattern.chars().nth(4).unwrap() {
+                    continue;
+                }
+                count += 1;
+            }
+        }
+        count
+    };
+
+    // let pattern = "MSAMS";
+    let mut count = 0;
+    count += get_count(lines, "MSAMS");
+    count += get_count(lines, "SSAMM");
+    count += get_count(lines, "SMASM");
+    count += get_count(lines, "MMASS");
+    println!("Day 04, part 2: {}", count);
 }
