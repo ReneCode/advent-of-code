@@ -1,4 +1,4 @@
-use crate::util::io;
+use crate::util::{io, math::format_radix};
 use itertools::Itertools;
 
 type Number = i64;
@@ -12,6 +12,7 @@ struct Equation {
 enum Operation {
     Add,
     Multiply,
+    Concat,
 }
 
 impl Equation {
@@ -19,6 +20,21 @@ impl Equation {
         // let operations = (Operation::Add, Operation::Multiply).com
         let all_operations = self.all_operations();
 
+        for operations in all_operations {
+            let result = self.evaluate(&operations);
+            if result == self.result {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn solvable_part2(&self) -> bool {
+        // let operations = (Operation::Add, Operation::Multiply).com
+        let all_operations = self.all_operations_part2();
+
+        println!("checking: {:?}", self.parts);
         for operations in all_operations {
             let result = self.evaluate(&operations);
             if result == self.result {
@@ -49,6 +65,33 @@ impl Equation {
         result
     }
 
+    fn all_operations_part2(&self) -> Vec<Vec<Operation>> {
+        let mut result = Vec::new();
+        let gaps = self.parts.len() - 1;
+
+        // in total there are 3^gaps possible operations
+        let max_nr: u32 = (3 as u32).pow(gaps as u32);
+        for i in 0..max_nr {
+            let mut trio_string = format_radix(i, 3);
+            // fill up with leading zeros
+            while trio_string.len() < gaps {
+                trio_string = format!("0{}", trio_string);
+            }
+            let mut operations = vec![Operation::Add; gaps];
+            for pos in 0..gaps {
+                match trio_string.chars().nth(pos).unwrap() {
+                    '0' => operations[pos] = Operation::Add,
+                    '1' => operations[pos] = Operation::Multiply,
+                    '2' => operations[pos] = Operation::Concat,
+                    _ => panic!("unexpected value"),
+                }
+            }
+            result.push(operations);
+        }
+
+        result
+    }
+
     fn evaluate(&self, operations: &[Operation]) -> Number {
         let mut result = self.parts[0];
         for i in 0..operations.len() {
@@ -56,6 +99,10 @@ impl Equation {
             result = match operations[i] {
                 Operation::Add => result + val,
                 Operation::Multiply => result * val,
+                Operation::Concat => {
+                    let concated_string = format!("{}{}", result, val);
+                    concated_string.parse().unwrap()
+                }
             }
         }
         result
@@ -81,4 +128,11 @@ pub fn day07() {
         .map(|eq| eq.result)
         .sum::<Number>();
     println!("Day 07: Part 1) = {:?}", result);
+
+    let result = equations
+        .iter()
+        .filter(|eq| eq.solvable_part2())
+        .map(|eq| eq.result)
+        .sum::<Number>();
+    println!("Day 07: Part 2) = {:?}", result);
 }
