@@ -51,12 +51,12 @@ impl Equation {
 
         // in total there are 2^gaps possible operations
         // look at the binary representation of the number
-        let max_nr: u32 = (2 as u32).pow(gaps as u32);
+        let max_nr: u32 = (2_u32).pow(gaps as u32);
         for i in 0..max_nr {
             let mut operations = vec![Operation::Add; gaps];
-            for pos in 0..gaps {
+            for (pos, op) in operations.iter_mut().enumerate() {
                 if 1 & (i >> pos) == 1 {
-                    operations[pos] = Operation::Multiply;
+                    *op = Operation::Multiply;
                 }
             }
             result.push(operations);
@@ -70,7 +70,7 @@ impl Equation {
         let gaps = self.parts.len() - 1;
 
         // in total there are 3^gaps possible operations
-        let max_nr: u32 = (3 as u32).pow(gaps as u32);
+        let max_nr: u32 = (3_u32).pow(gaps as u32);
         for i in 0..max_nr {
             let mut trio_string = format_radix(i, 3);
             // fill up with leading zeros
@@ -78,11 +78,11 @@ impl Equation {
                 trio_string = format!("0{}", trio_string);
             }
             let mut operations = vec![Operation::Add; gaps];
-            for pos in 0..gaps {
+            for (pos, op) in operations.iter_mut().enumerate() {
                 match trio_string.chars().nth(pos).unwrap() {
-                    '0' => operations[pos] = Operation::Add,
-                    '1' => operations[pos] = Operation::Multiply,
-                    '2' => operations[pos] = Operation::Concat,
+                    '0' => *op = Operation::Add,
+                    '1' => *op = Operation::Multiply,
+                    '2' => *op = Operation::Concat,
                     _ => panic!("unexpected value"),
                 }
             }
@@ -94,9 +94,9 @@ impl Equation {
 
     fn evaluate(&self, operations: &[Operation]) -> Number {
         let mut result = self.parts[0];
-        for i in 0..operations.len() {
+        for (i, op) in operations.iter().enumerate() {
             let val = self.parts[i + 1];
-            result = match operations[i] {
+            result = match op {
                 Operation::Add => result + val,
                 Operation::Multiply => result * val,
                 Operation::Concat => {

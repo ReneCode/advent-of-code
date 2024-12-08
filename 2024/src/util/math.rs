@@ -30,7 +30,7 @@ pub fn format_radix(mut x: u32, radix: u32) -> String {
 
     loop {
         let m = x % radix;
-        x = x / radix;
+        x /= radix;
 
         // will panic if you use a bad radix (< 2 or > 36).
         result.push(std::char::from_digit(m, radix).unwrap());

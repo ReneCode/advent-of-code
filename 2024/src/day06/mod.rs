@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
 use crate::util::io;
-use itertools::Itertools;
 
 #[derive(PartialEq, Eq, Clone, Hash)]
 struct Position {
@@ -56,12 +55,12 @@ impl Board {
         }
     }
 
-    fn guard_wallk(&self) -> WalkResult {
+    fn guard_walk(&self) -> WalkResult {
         let mut visited = HashSet::new();
         visited.insert(self.guard_pos.clone());
         let mut turning_positions = HashSet::new();
 
-        let area_len = self.area.get(0).unwrap().len() as i64;
+        let area_len = self.area.first().unwrap().len() as i64;
         let area_height = self.area.len() as i64;
 
         let mut pos = self.guard_pos.clone();
@@ -123,7 +122,6 @@ impl Board {
                 visited.insert(pos.clone());
             }
         }
-        WalkResult::Loop
     }
 }
 
@@ -131,7 +129,7 @@ pub fn day06() {
     let lines = io::read_lines("./src/day06/06.data").unwrap();
 
     let board = Board::new(lines);
-    if let WalkResult::LeaveArea(visited) = board.guard_wallk() {
+    if let WalkResult::LeaveArea(visited) = board.guard_walk() {
         println!("Day 06: Part 1) = {:?}", visited);
     }
 
@@ -142,19 +140,17 @@ pub fn day06() {
     let mut replace_results_loop = 0;
     // brute force
     for y in 0..lines.len() {
-        for x in 0..lines.get(0).unwrap().len() {
+        for x in 0..lines.first().unwrap().len() {
             let current = lines[y].chars().nth(x).unwrap();
-            if current != GUARD && current != BLOCK {
-                if lines[y].chars().nth(x).unwrap() != GUARD {
-                    let mut modifed_lines = lines.clone();
-                    let mut mut_line = modifed_lines.get_mut(y).unwrap();
-                    mut_line.replace_range(x..x + 1, &replace);
+            if current != GUARD && current != BLOCK && lines[y].chars().nth(x).unwrap() != GUARD {
+                let mut modifed_lines = lines.clone();
+                let mut_line = modifed_lines.get_mut(y).unwrap();
+                mut_line.replace_range(x..x + 1, &replace);
 
-                    let board = Board::new(modifed_lines);
-                    if let WalkResult::Loop = board.guard_wallk() {
-                        println!("loop when {} / {}", x, y);
-                        replace_results_loop += 1;
-                    }
+                let board = Board::new(modifed_lines);
+                if let WalkResult::Loop = board.guard_walk() {
+                    println!("loop when {} / {}", x, y);
+                    replace_results_loop += 1;
                 }
             }
         }

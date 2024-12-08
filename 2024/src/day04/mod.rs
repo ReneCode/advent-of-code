@@ -72,15 +72,15 @@ fn find_all(lines: Vec<String>) -> usize {
     }
     count
 }
-fn part2(lines: &Vec<String>) {
-    fn get_count(lines: &Vec<String>, pattern: &str) -> usize {
+fn part2(lines: &[String]) {
+    fn get_count(lines: &[String], pattern: &str) -> usize {
         let line_len = lines[0].len();
         let line_count = lines.len();
         let mut count = 0;
         for x in 0..line_len - 2 {
             for y in 0..line_count - 2 {
                 let c = lines[y].chars().nth(x).unwrap();
-                if c != pattern.chars().nth(0).unwrap() {
+                if c != pattern.chars().next().unwrap() {
                     continue;
                 }
                 let c = lines[y].chars().nth(x + 2).unwrap();
@@ -103,7 +103,7 @@ fn part2(lines: &Vec<String>) {
             }
         }
         count
-    };
+    }
 
     // let pattern = "MSAMS";
     let mut count = 0;

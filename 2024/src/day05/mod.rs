@@ -22,7 +22,7 @@ impl Update {
     fn middle_page(&self) -> i64 {
         let len = self.pages.len();
         let middle = len / 2;
-        self.pages.iter().nth(middle).unwrap().clone()
+        *self.pages.get(middle).unwrap()
     }
 }
 
@@ -76,7 +76,7 @@ fn part2(rules: &Vec<Rule>, updates: &Vec<Update>) {
 }
 
 fn is_update_ok(update: &Update, rules: &Vec<Rule>) -> bool {
-    let pages_set: HashSet<i64> = HashSet::from_iter(update.pages.iter().map(|i| *i));
+    let pages_set: HashSet<i64> = HashSet::from_iter(update.pages.iter().copied());
 
     for rule in rules {
         if pages_set.contains(&rule.x) && pages_set.contains(&rule.y) {
@@ -92,15 +92,15 @@ fn is_update_ok(update: &Update, rules: &Vec<Rule>) -> bool {
     true
 }
 
-fn fix_update(update: &Update, rules: &Vec<Rule>) -> Update {
-    let pages_set: HashSet<i64> = HashSet::from_iter(update.pages.iter().map(|i| *i));
+fn fix_update(update: &Update, rules: &[Rule]) -> Update {
+    let pages_set: HashSet<i64> = HashSet::from_iter(update.pages.iter().copied());
 
     let relevant_rules = rules
         .iter()
         .filter(|r| pages_set.contains(&r.x) && pages_set.contains(&r.y))
         .collect_vec();
 
-    let mut pages: Vec<i64> = Vec::from_iter(pages_set.iter().map(|i| *i));
+    let mut pages: Vec<i64> = Vec::from_iter(pages_set.iter().copied());
 
     // sort the pages based on the rules
     pages.sort_by(|a, b| {

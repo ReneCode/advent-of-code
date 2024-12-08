@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::util::{io, math::format_radix};
+use crate::util::io;
 use itertools::Itertools;
 
 type Number = i64;
@@ -64,7 +64,7 @@ pub fn day08() {
     part2(&antennas, line_len, line_count);
 }
 
-fn part1(antennas: &Vec<Antenna>, line_len: usize, line_count: usize) {
+fn part1(antennas: &[Antenna], line_len: usize, line_count: usize) {
     let mut anti_nodes: HashSet<Position> = HashSet::new();
     let groups = antennas
         .iter()
@@ -93,7 +93,7 @@ fn part1(antennas: &Vec<Antenna>, line_len: usize, line_count: usize) {
     println!("Day07 part 1: {:?}", anti_nodes.len());
 }
 
-fn part2(antennas: &Vec<Antenna>, line_len: usize, line_count: usize) {
+fn part2(antennas: &[Antenna], line_len: usize, line_count: usize) {
     let bbox = BoundingBox {
         min: Position::new(0, 0),
         max: Position::new(line_len as Number - 1, line_count as Number - 1),
