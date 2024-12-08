@@ -7,7 +7,7 @@ mod day04;
 mod day05;
 mod day06;
 mod day07;
-// mod day08;
+mod day08;
 // mod day09;
 // mod day10;
 // mod day11;
@@ -25,7 +25,7 @@ mod day07;
 // mod day23;
 mod util;
 
-const CURRENT_DAY: i32 = 7;
+const CURRENT_DAY: i32 = 8;
 
 fn main() {
     println!("Hello Advent of Code 2024!");
@@ -38,7 +38,7 @@ fn main() {
         5 => day05::day05(),
         6 => day06::day06(),
         7 => day07::day07(),
-        // 8 => day08::day08(),
+        8 => day08::day08(),
         // 9 => day09::day09(),
         // 10 => day10::day10(),
         // 11 => day11::day11(),
