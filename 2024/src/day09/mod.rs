@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use crate::util::io;
 
 type Number = i64;
@@ -27,6 +29,8 @@ pub fn day09() {
     }
 
     part1(&disk);
+
+    part2(&mut disk);
 }
 
 fn part1(disk: &[Number]) {
@@ -60,9 +64,48 @@ fn part1(disk: &[Number]) {
     println!("Day09 part 1: {:?}", result);
 }
 
+fn part2(disk: &mut [Number]) {
+    let mut file_id = *disk.last().unwrap();
+    loop {
+        let found_file = disk
+            .iter()
+            .positions(|id| *id == file_id)
+            .sorted()
+            .collect_vec();
+        let file_start = *found_file.first().unwrap();
+        let file_end = *found_file.last().unwrap();
+        let file_len = file_end - file_start + 1;
+
+        let window = disk
+            .windows(file_len)
+            // .into_iter()
+            .enumerate()
+            .find(|(_pos, w)| w.iter().all(|i| *i == FREE));
+
+        if let Some((pos, _rg)) = window {
+            if pos < file_start {
+                // println!("free: {:?}", pos);
+
+                for i in 0..file_len {
+                    disk[pos + i] = file_id;
+                    disk[file_start + i] = FREE;
+                }
+            }
+        }
+
+        if file_id == 0 {
+            break;
+        }
+        file_id -= 1;
+    }
+
+    let result = calc_checksum(disk);
+    println!("Day09 part 2: {:?}", result);
+}
+
 fn calc_checksum(ids: &[Number]) -> Number {
     let mut result = 0;
-    for (idx, id) in ids.iter().enumerate() {
+    for (idx, id) in ids.iter().enumerate().filter(|(_idx, id)| **id != FREE) {
         result += idx as i64 * *id;
     }
     result
