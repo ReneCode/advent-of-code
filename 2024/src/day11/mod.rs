@@ -73,12 +73,10 @@ fn one_blink(stones: HashMap<Number, Number>) -> HashMap<Number, Number> {
     for (stone, org_count) in stones {
         let result = next_stone(stone);
         for nr in result {
-            if new_stones.contains_key(&nr) {
-                let count = new_stones.get_mut(&nr).unwrap();
-                *count += org_count;
-            } else {
-                new_stones.insert(nr, org_count);
-            }
+            new_stones
+                .entry(nr)
+                .and_modify(|count| *count += org_count)
+                .or_insert(org_count);
         }
     }
     new_stones
