@@ -18,6 +18,7 @@ pub fn day11() {
 }
 
 fn part1(stones: &[Number]) {
+    // brute force
     let mut stones = stones.to_vec();
     for _ in 0..25 {
         stones = next_stones(&stones);
@@ -49,14 +50,13 @@ pub fn next_stones(stones: &[Number]) -> Vec<Number> {
 }
 
 fn part2(stone_array: &[Number]) {
+    // create a hashmap with the stones and their count
     let mut stones = HashMap::new();
     for nr in stone_array {
-        if stones.contains_key(nr) {
-            let count = stones.get_mut(nr).unwrap();
-            *count += 1;
-        } else {
-            stones.insert(*nr, 1);
-        }
+        stones
+            .entry(*nr)
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
     }
 
     for _ in 0..75 {
@@ -70,6 +70,7 @@ fn part2(stone_array: &[Number]) {
 fn one_blink(stones: HashMap<Number, Number>) -> HashMap<Number, Number> {
     let mut new_stones = HashMap::new();
 
+    // update the counts on one blink
     for (stone, org_count) in stones {
         let result = next_stone(stone);
         for nr in result {
