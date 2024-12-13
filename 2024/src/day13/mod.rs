@@ -2,10 +2,12 @@ use crate::util::io;
 
 use itertools::Itertools;
 
+type Number = i64;
+
 #[derive(Debug, PartialEq, Eq)]
 struct Point {
-    x: i32,
-    y: i32,
+    x: Number,
+    y: Number,
 }
 
 #[derive(Debug)]
@@ -61,7 +63,7 @@ impl Machine {
         }
     }
 
-    fn get_button_count(&self) -> Option<(i32, i32)> {
+    fn get_button_count(&self) -> Option<(Number, Number)> {
         // production optimization
         // just simple algebra to solve the equation for a and
         let b = (self.prize.y * self.move_a.x - self.move_a.y * self.prize.x)
@@ -81,7 +83,7 @@ impl Machine {
         }
     }
 
-    fn get_cost_to_solve(&self) -> i32 {
+    fn get_cost_to_solve(&self) -> Number {
         if let Some((a, b)) = self.get_button_count() {
             a * 3 + b
         } else {
@@ -100,8 +102,39 @@ pub fn day13() {
         .map(|l3| Machine::from(&l3))
         .collect_vec();
 
+    part1(&machines);
+
+    let delta = 10000000000000;
+    let machines = machines
+        .iter()
+        .map(|m| Machine {
+            move_a: Point {
+                x: m.move_a.x,
+                y: m.move_a.y,
+            },
+            move_b: Point {
+                x: m.move_b.x,
+                y: m.move_b.y,
+            },
+            prize: Point {
+                x: m.prize.x + delta,
+                y: m.prize.y + delta,
+            },
+        })
+        .collect_vec();
+
     let mut sum_cost = 0;
-    for machine in machines {
+    for machine in machines.iter() {
+        let cost = machine.get_cost_to_solve();
+        sum_cost += cost;
+    }
+
+    println!("day13 part2: {:?}", sum_cost);
+}
+
+fn part1(machines: &[Machine]) {
+    let mut sum_cost = 0;
+    for machine in machines.iter() {
         let cost = machine.get_cost_to_solve();
         sum_cost += cost;
     }
