@@ -25,12 +25,10 @@ impl Sides {
     fn connect_or_add_lr(&mut self, x: i32, y: i32) {
         let mut found = false;
         for (key, side_points) in self.lr_sides.iter_mut() {
-            if *key == y {
-                if side_points.contains(&(x + 1)) || side_points.contains(&(x - 1)) {
-                    found = true;
-                    side_points.push(x);
-                    break;
-                }
+            if *key == y && (side_points.contains(&(x + 1)) || side_points.contains(&(x - 1))) {
+                found = true;
+                side_points.push(x);
+                break;
             }
         }
         if !found {
@@ -41,12 +39,10 @@ impl Sides {
     fn connect_or_add_lri(&mut self, x: i32, y: i32) {
         let mut found = false;
         for (key, side_points) in self.lri_sides.iter_mut() {
-            if *key == y {
-                if side_points.contains(&(x + 1)) || side_points.contains(&(x - 1)) {
-                    found = true;
-                    side_points.push(x);
-                    break;
-                }
+            if *key == y && (side_points.contains(&(x + 1)) || side_points.contains(&(x - 1))) {
+                found = true;
+                side_points.push(x);
+                break;
             }
         }
         if !found {
@@ -57,12 +53,10 @@ impl Sides {
     fn connect_or_add_ud(&mut self, x: i32, y: i32) {
         let mut found = false;
         for (key, side_points) in self.ud_sides.iter_mut() {
-            if *key == x {
-                if side_points.contains(&(y + 1)) || side_points.contains(&(y - 1)) {
-                    found = true;
-                    side_points.push(y);
-                    break;
-                }
+            if *key == x && (side_points.contains(&(y + 1)) || side_points.contains(&(y - 1))) {
+                found = true;
+                side_points.push(y);
+                break;
             }
         }
         if !found {
@@ -73,12 +67,10 @@ impl Sides {
     fn connect_or_add_udi(&mut self, x: i32, y: i32) {
         let mut found = false;
         for (key, side_points) in self.udi_sides.iter_mut() {
-            if *key == x {
-                if side_points.contains(&(y + 1)) || side_points.contains(&(y - 1)) {
-                    found = true;
-                    side_points.push(y);
-                    break;
-                }
+            if *key == x && (side_points.contains(&(y + 1)) || side_points.contains(&(y - 1))) {
+                found = true;
+                side_points.push(y);
+                break;
             }
         }
         if !found {
@@ -96,7 +88,7 @@ impl Sides {
 
 #[derive(Debug)]
 struct Region {
-    id: char,
+    _id: char,
     positions: Vec<(i32, i32)>,
 }
 
@@ -171,12 +163,12 @@ impl Region {
     }
 
     fn calc_price_perimeter(&self) -> i32 {
-        let (perimeter, sides) = self.calc_perimeter();
+        let (perimeter, _sides) = self.calc_perimeter();
         self.get_area() * perimeter
     }
 
     fn calc_price_sides(&self) -> i32 {
-        let (perimeter, sides) = self.calc_perimeter();
+        let (_perimeter, sides) = self.calc_perimeter();
         self.get_area() * sides
     }
 }
@@ -192,7 +184,7 @@ impl Plant {
         let areas = split_into_areas(&self.positions)
             .iter()
             .map(|area| Region {
-                id: self.id,
+                _id: self.id,
                 positions: area.clone(),
             })
             .collect_vec();
