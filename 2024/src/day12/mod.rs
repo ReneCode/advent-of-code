@@ -6,24 +6,10 @@ use crate::util::io;
 
 #[derive(Debug)]
 struct Region {
-    id: char,
     positions: Vec<(i32, i32)>,
 }
 
 impl Region {
-    fn has_neighbour(&self, x: i32, y: i32) -> bool {
-        for (rx, ry) in self.positions.iter() {
-            if (rx - x).abs() + (ry - y).abs() == 1 {
-                return true;
-            }
-        }
-        false
-    }
-
-    fn add_position(&mut self, x: i32, y: i32) {
-        self.positions.push((x, y));
-    }
-
     fn get_area(&self) -> i32 {
         self.positions.len() as i32
     }
@@ -94,10 +80,7 @@ impl Region {
 
 #[derive(Debug)]
 struct Plant {
-    pub id: char,
     pub positions: Vec<(i32, i32)>,
-
-    pub regions: Vec<Region>,
 }
 
 impl Plant {
@@ -105,7 +88,6 @@ impl Plant {
         let areas = split_into_areas(&self.positions)
             .iter()
             .map(|area| Region {
-                id: self.id,
                 positions: area.clone(),
             })
             .collect_vec();
@@ -123,18 +105,15 @@ pub fn day12() {
                 .entry(c)
                 .and_modify(|plant| plant.positions.extend(vec![(x as i32, y as i32)]))
                 .or_insert(Plant {
-                    id: c,
                     positions: vec![(x as i32, y as i32)],
-                    regions: vec![],
                 });
         }
     }
 
     let mut regions: Vec<Region> = Vec::new();
-    for (c, plant) in plants.iter_mut() {
+    for (_c, plant) in plants.iter_mut() {
         let plant_regions = plant.split_into_regions();
         regions.extend(plant_regions);
-        // println!("{:?}", plant);
     }
 
     part1(&regions);
@@ -168,8 +147,7 @@ fn split_into_areas(positions: &[(i32, i32)]) -> Vec<Vec<(i32, i32)>> {
         let first_pos = one.first().unwrap();
 
         check_positions.push(*first_pos);
-        while !check_positions.is_empty() {
-            let (x, y) = check_positions.pop().unwrap();
+        while let Some((x, y)) = check_positions.pop() {
             if temp.contains(&(x, y)) {
                 temp.remove(&(x, y));
                 current_area.push((x, y));
