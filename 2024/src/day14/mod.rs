@@ -63,6 +63,9 @@ pub fn day14() {
 
     let mut robots = lines.iter().map(|line| Robot::from(line)).collect_vec();
     part1(&mut robots);
+
+    let mut robots = lines.iter().map(|line| Robot::from(line)).collect_vec();
+    part2(&mut robots);
 }
 
 fn part1(robots: &mut [Robot]) {
@@ -107,4 +110,27 @@ fn part1(robots: &mut [Robot]) {
     let result = quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3];
 
     println!("Day14 part 1: {:?} / {:?}", quadrants, result);
+}
+
+fn part2(robots: &mut [Robot]) {
+    for sec in 1..10000 {
+        for robot in robots.iter_mut() {
+            robot.tick(SPACE_WIDE, SPACE_TALL);
+        }
+
+        println!("------------{sec}-------");
+        display_robots(robots);
+    }
+}
+
+fn display_robots(robots: &[Robot]) {
+    let mut space = vec![vec!['.'; SPACE_WIDE as usize]; SPACE_TALL as usize];
+
+    for robot in robots.iter() {
+        space[robot.position.y as usize][robot.position.x as usize] = '#';
+    }
+
+    for row in space.iter() {
+        println!("{:?}", row.iter().collect::<String>());
+    }
 }
