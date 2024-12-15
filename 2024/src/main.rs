@@ -25,7 +25,7 @@ mod day17;
 // mod day23;
 mod util;
 
-const CURRENT_DAY: i32 = 14;
+const CURRENT_DAY: i32 = 15;
 
 fn main() {
     println!("Hello Advent of Code 2024!");
