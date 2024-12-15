@@ -275,8 +275,13 @@ impl Area {
                 Direction::North | Direction::South => {
                     match (self.contains_box(&new_pos1), self.contains_box(&new_pos2)) {
                         (Some((lp1, lp2)), Some((rp1, rp2))) => {
-                            move_box = self.do_move_box(&lp1, &lp2, direction)
-                                && self.do_move_box(&rp1, &rp2, direction);
+                            if lp1 == rp1 && lp2 == rp2 {
+                                // same box
+                                move_box = self.do_move_box(&lp1, &lp2, direction);
+                            } else {
+                                move_box = self.do_move_box(&lp1, &lp2, direction)
+                                    && self.do_move_box(&rp1, &rp2, direction);
+                            }
                         }
                         (Some((lp1, lp2)), None) => {
                             move_box = self.do_move_box(&lp1, &lp2, direction);
@@ -309,6 +314,24 @@ impl Area {
 
         result
     }
+
+    fn calc_sum_box_gps_coords(&self) -> i32 {
+        let mut result = 0;
+        for (p1, p2) in &self.boxes {
+            // let dy = p1.y.min(self.maxy - p1.y - 1);
+            // let dx1 = p1.x.min(self.maxx - p1.x - 1);
+            // let dx2 = p2.x.min(self.maxx - p2.x - 1);
+            // let dx = dx1.min(dx2);
+            // let dy = p1.y;
+            let dx = p1.x;
+            let dy = p1.y;
+
+            let coord = dx + dy * 100;
+            result += coord;
+        }
+
+        result
+    }
 }
 
 pub fn day15() {
@@ -333,7 +356,7 @@ pub fn day15() {
         })
         .collect_vec();
 
-    // part1(&area, &moves);
+    part1(&area, &moves);
 
     part2(&area, &moves);
 }
@@ -341,7 +364,7 @@ pub fn day15() {
 fn part1(area_str: &[&str], moves: &[Direction]) {
     let mut area = Area::from(area_str, false);
 
-    area.print();
+    // area.print();
 
     for direction in moves {
         area.move_robot(*direction);
@@ -356,15 +379,14 @@ fn part1(area_str: &[&str], moves: &[Direction]) {
 fn part2(area_str: &[&str], moves: &[Direction]) {
     let mut area = Area::from(area_str, true);
 
-    area.print();
+    // area.print();
 
     for direction in moves {
         area.move_robot(*direction);
-        println!("----- {:?}", direction);
-        area.print();
+        // area.print();
     }
 
-    let result = area.calc_sum_gps_coords();
+    let result = area.calc_sum_box_gps_coords();
 
     println!("Day15 part 2: {:?}", result);
 }
