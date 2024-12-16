@@ -2,3 +2,5 @@ target/
 debug/
 
 Cargo.lock
+
+out.txt
