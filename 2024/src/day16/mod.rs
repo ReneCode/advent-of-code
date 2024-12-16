@@ -335,4 +335,8 @@ pub fn day16() {
     maze.print();
 
     println!("Day16 part 1: {:?}", a);
+
+    // part2
+    // https://en.wikipedia.org/wiki/Dijkstra's_algorithm#Pseudocode
+    // last block before 'using a priority queue'
 }
