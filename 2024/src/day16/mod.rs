@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    hash::Hash,
+};
 
 use itertools::Itertools;
 
@@ -255,6 +258,7 @@ impl Maze {
         queue.push((start.x, start.y, Direction::East));
 
         let mut prev = HashMap::new();
+        let mut prev_all = HashMap::new();
         let mut distance = HashMap::new();
 
         distance.insert((start.x, start.y, Direction::East), 0);
@@ -292,9 +296,18 @@ impl Maze {
                         }
                     }
                 }
-                if alt < *distance.get(&next_pos_and_dir).unwrap_or(&std::usize::MAX) {
+                if alt <= *distance.get(&next_pos_and_dir).unwrap_or(&std::usize::MAX) {
                     distance.insert(next_pos_and_dir, alt);
                     prev.insert(next_pos_and_dir, cur_pos_and_dir);
+                    prev_all
+                        .entry(next_pos_and_dir)
+                        .and_modify(|f: &mut Vec<(usize, usize, Direction)>| {
+                            if !f.contains(&cur_pos_and_dir) {
+                                // println!("Adding {:?} to {:?}", cur_pos_and_dir, next_pos_and_dir);
+                                f.push(cur_pos_and_dir);
+                            }
+                        })
+                        .or_insert(vec![cur_pos_and_dir]);
                     queue.push(next_pos_and_dir);
                 }
             }
@@ -322,6 +335,70 @@ impl Maze {
             .unwrap();
 
         let a = a1.min(a2.min(a3.min(a4)));
+
+        let p = prev
+            .iter()
+            .find(|(k, v)| k.0 == end.x && k.1 == end.y)
+            .unwrap();
+        let mut cur = *p.0;
+        let mut path = Vec::new();
+
+        loop {
+            path.push((cur.0, cur.1));
+            if let Some(p) = prev.get(&cur) {
+                cur = *p;
+            } else {
+                break;
+            }
+        }
+        path.reverse();
+
+        let p_all = prev_all
+            .iter()
+            .find(|(k, v)| k.0 == end.x && k.1 == end.y)
+            .unwrap();
+
+        let mut cur = *p_all.0;
+
+        // -----------------
+        // hot fix
+        //    todo: get the right direction for the end-point
+        //    check if with the minimal distance.
+        // -----------------
+        cur.2 = Direction::North;
+
+        let one_path = vec![cur];
+        let mut all_paths = vec![one_path];
+        loop {
+            let mut next_all_paths = Vec::new();
+            let mut found = false;
+            for path in all_paths.iter_mut() {
+                let last = *path.last().unwrap();
+                if let Some(prev_list) = prev_all.get(&last) {
+                    for prev in prev_list {
+                        let mut new_path = path.clone();
+                        new_path.push(*prev);
+                        next_all_paths.push(new_path);
+                        found = true;
+                    }
+                }
+            }
+            if !found {
+                break;
+            }
+
+            all_paths = next_all_paths;
+        }
+
+        let mut positions: HashSet<(usize, usize)> = HashSet::new();
+        for path in all_paths.iter() {
+            for pos in path.iter() {
+                positions.insert((pos.0, pos.1));
+            }
+        }
+
+        println!("Day16 part2: {:?}", positions.len());
+
         *a
     }
 }
@@ -332,7 +409,7 @@ pub fn day16() {
     let maze = Maze::from(_lines);
 
     let a = maze.dijstra();
-    maze.print();
+    // maze.print();
 
     println!("Day16 part 1: {:?}", a);
 
