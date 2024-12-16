@@ -1,6 +1,10 @@
+use std::collections::{HashMap, HashSet};
+
+use itertools::Itertools;
+
 use crate::util::io;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 enum Cell {
     Wall,
     Start,
@@ -8,7 +12,7 @@ enum Cell {
     Empty,
 }
 
-#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
 enum Direction {
     North,
     East,
@@ -16,7 +20,7 @@ enum Direction {
     West,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 struct Position {
     x: usize,
     y: usize,
@@ -27,6 +31,15 @@ impl Position {
         Position { x, y }
     }
 }
+
+type PosAndDir = (usize, usize, Direction);
+
+// #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+// struct PosAndDir {
+//     x: usize,
+//     y: usize,
+//     dir: Direction,
+// }
 
 #[derive(Clone, Debug)]
 struct Way {
@@ -183,74 +196,133 @@ impl Maze {
         panic!("No end found");
     }
 
-    fn find_all_ways(&self) -> Vec<Way> {
-        let mut all_complete_ways = Vec::new();
+    fn get_neighbours(&self, pos_and_dir: PosAndDir) -> Vec<(usize, usize, Direction)> {
+        let mut neighbours = Vec::new();
+        let (x, y, dir) = pos_and_dir;
+        if x > 0 && dir != Direction::East {
+            if self.data[y][x - 1] == Cell::Empty || self.data[y][x - 1] == Cell::End {
+                neighbours.push((x - 1, y, Direction::West));
+            }
+        }
+        if x < self.maxx - 1 && dir != Direction::West {
+            if self.data[y][x + 1] == Cell::Empty || self.data[y][x + 1] == Cell::End {
+                neighbours.push((x + 1, y, Direction::East));
+            }
+        }
+        if y > 0 && dir != Direction::South {
+            if self.data[y - 1][x] == Cell::Empty || self.data[y - 1][x] == Cell::End {
+                neighbours.push((x, y - 1, Direction::North));
+            }
+        }
+        if y < self.maxy - 1 && dir != Direction::North {
+            if self.data[y + 1][x] == Cell::Empty || self.data[y + 1][x] == Cell::End {
+                neighbours.push((x, y + 1, Direction::South));
+            }
+        }
 
+        neighbours
+    }
+
+    fn bfs(&self) {
+        let mut queue = Vec::new();
         let start = self.find_start();
-        let way = Way::new(&start);
-        let mut ways = vec![way];
+        queue.push((start.x, start.y, Direction::East));
 
-        while !ways.is_empty() {
-            let way = ways.remove(0);
-            let last_pos = way.positions.last().unwrap();
-            let x = last_pos.x;
-            let y = last_pos.y;
+        let mut visited = HashSet::new();
+        visited.insert((start.x, start.y, Direction::East));
 
-            if let Cell::End = self.data[y][x] {
-                all_complete_ways.push(way);
-                continue;
-            }
+        let mut prev = HashMap::new();
 
-            if x > 0 {
-                match self.data[y][x - 1] {
-                    Cell::Empty | Cell::End => {
-                        if !way.contains(x - 1, y) {
-                            let mut new_way = way.clone();
-                            new_way.add(Position::new(x - 1, y));
-                            ways.push(new_way);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            if x < self.maxx - 1 {
-                match self.data[y][x + 1] {
-                    Cell::Empty | Cell::End => {
-                        if !way.contains(x + 1, y) {
-                            let mut new_way = way.clone();
-                            new_way.add(Position::new(x + 1, y));
-                            ways.push(new_way);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            if y > 0 {
-                match self.data[y - 1][x] {
-                    Cell::Empty | Cell::End => {
-                        if !way.contains(x, y - 1) {
-                            let mut new_way = way.clone();
-                            new_way.add(Position::new(x, y - 1));
-                            ways.push(new_way);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            if y < self.maxy - 1 {
-                match self.data[y + 1][x] {
-                    Cell::Empty | Cell::End => {
-                        if !way.contains(x, y + 1) {
-                            let mut new_way = way.clone();
-                            new_way.add(Position::new(x, y + 1));
-                            ways.push(new_way);
-                        }
-                    }
-                    _ => {}
+        while !queue.is_empty() {
+            let cur_pos_and_dir = queue.remove(0);
+            let neighbours = self.get_neighbours(cur_pos_and_dir);
+
+            for next_pos_and_dir in neighbours {
+                if !visited.contains(&next_pos_and_dir) {
+                    queue.push(next_pos_and_dir);
+                    visited.insert(next_pos_and_dir);
+                    prev.insert(next_pos_and_dir, cur_pos_and_dir);
                 }
             }
         }
-        all_complete_ways
+
+        // now prev is filled with the shortest path
+    }
+
+    fn dijstra(&self) -> usize {
+        let mut queue = Vec::new();
+        let start = self.find_start();
+        queue.push((start.x, start.y, Direction::East));
+
+        let mut prev = HashMap::new();
+        let mut distance = HashMap::new();
+
+        distance.insert((start.x, start.y, Direction::East), 0);
+
+        while !queue.is_empty() {
+            // find q with min distance
+            let a = queue
+                .iter()
+                .enumerate()
+                .map(|(idx, q)| (idx, distance.get(q).unwrap()))
+                .min_by_key(|x| x.1)
+                .unwrap();
+            let cur_pos_and_dir = queue.remove(a.0);
+
+            let neighbours = self.get_neighbours(cur_pos_and_dir);
+
+            let cur_direction = cur_pos_and_dir.2;
+            let cur_dist = *distance.get(&cur_pos_and_dir).unwrap();
+            for next_pos_and_dir in neighbours {
+                let mut alt = cur_dist;
+                match (cur_direction, next_pos_and_dir.2) {
+                    (Direction::North | Direction::South, Direction::West | Direction::East) => {
+                        alt += 1000;
+                        alt += 1;
+                    }
+                    (Direction::West | Direction::East, Direction::North | Direction::South) => {
+                        alt += 1000;
+                        alt += 1;
+                    }
+                    (cur, new) => {
+                        if cur == new {
+                            alt += 1;
+                        } else {
+                            panic!("Invalid direction change {:?} -> {:?}", cur, new);
+                        }
+                    }
+                }
+                if alt < *distance.get(&next_pos_and_dir).unwrap_or(&std::usize::MAX) {
+                    distance.insert(next_pos_and_dir, alt);
+                    prev.insert(next_pos_and_dir, cur_pos_and_dir);
+                    queue.push(next_pos_and_dir);
+                }
+            }
+        }
+
+        // now prev is filled with the shortest path
+
+        let end = self.find_end();
+
+        let a1 = distance
+            .get(&(end.x, end.y, Direction::North))
+            .or(Some(&usize::MAX))
+            .unwrap();
+        let a2 = distance
+            .get(&(end.x, end.y, Direction::West))
+            .or(Some(&usize::MAX))
+            .unwrap();
+        let a3 = distance
+            .get(&(end.x, end.y, Direction::East))
+            .or(Some(&usize::MAX))
+            .unwrap();
+        let a4 = distance
+            .get(&(end.x, end.y, Direction::South))
+            .or(Some(&usize::MAX))
+            .unwrap();
+
+        let a = a1.min(a2.min(a3.min(a4)));
+        *a
     }
 }
 
@@ -259,17 +331,8 @@ pub fn day16() {
 
     let maze = Maze::from(_lines);
 
-    // maze.print();
+    let a = maze.dijstra();
+    maze.print();
 
-    let ways = maze.find_all_ways();
-
-    let mut min_cost = std::usize::MAX;
-    for way in ways {
-        let cost = way.calc_cost();
-        min_cost = min_cost.min(cost);
-        println!("--------- Cost: {}  len:{}", cost, way.positions.len());
-        // way.print(&maze);
-    }
-
-    println!("Day16 part 1: {:?}", min_cost);
+    println!("Day16 part 1: {:?}", a);
 }
