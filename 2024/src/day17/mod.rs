@@ -4,28 +4,28 @@ use crate::util::io;
 
 #[derive(Debug)]
 struct Computer {
-    reg_a: i32,
-    reg_b: i32,
-    reg_c: i32,
+    reg_a: i64,
+    reg_b: i64,
+    reg_c: i64,
 
-    instruction_pointer: i32,
+    instruction_pointer: i64,
 
-    program: Vec<i32>,
+    program: Vec<i64>,
 }
 
-const OPCODE_ADV: i32 = 0;
-const OPCODE_BXL: i32 = 1;
-const OPCODE_BST: i32 = 2;
-const OPCODE_JNZ: i32 = 3;
-const OPCODE_BXC: i32 = 4;
-const OPCODE_OUT: i32 = 5;
-const OPCODE_BDV: i32 = 6;
-const OPCODE_CDV: i32 = 7;
+const OPCODE_ADV: i64 = 0;
+const OPCODE_BXL: i64 = 1;
+const OPCODE_BST: i64 = 2;
+const OPCODE_JNZ: i64 = 3;
+const OPCODE_BXC: i64 = 4;
+const OPCODE_OUT: i64 = 5;
+const OPCODE_BDV: i64 = 6;
+const OPCODE_CDV: i64 = 7;
 
 impl Computer {
     fn from(lines: &[String]) -> Computer {
-        fn get_register_value(line: &str) -> i32 {
-            let value: i32 = line
+        fn get_register_value(line: &str) -> i64 {
+            let value: i64 = line
                 .split(":")
                 .collect_vec()
                 .get(1)
@@ -48,7 +48,7 @@ impl Computer {
             .unwrap()
             .trim()
             .split(",")
-            .map(|x| x.parse::<i32>().unwrap())
+            .map(|x| x.parse::<i64>().unwrap())
             .collect_vec();
 
         Computer {
@@ -60,9 +60,9 @@ impl Computer {
         }
     }
 
-    fn run(&mut self) -> Vec<i32> {
+    fn run(&mut self) -> Vec<i64> {
         let mut output = vec![];
-        while self.instruction_pointer < self.program.len() as i32 {
+        while self.instruction_pointer < self.program.len() as i64 {
             let opcode = self.program[self.instruction_pointer as usize];
             self.instruction_pointer += 1;
             let operand = self.program[self.instruction_pointer as usize];
@@ -71,7 +71,7 @@ impl Computer {
             match opcode {
                 OPCODE_ADV => {
                     let value = self.get_combo_operand_value(operand);
-                    let result = self.reg_a / 2_i32.pow(value as u32);
+                    let result = self.reg_a / 2_i64.pow(value as u32);
                     self.reg_a = result;
                 }
 
@@ -108,13 +108,13 @@ impl Computer {
 
                 OPCODE_BDV => {
                     let value = self.get_combo_operand_value(operand);
-                    let result = self.reg_a / 2_i32.pow(value as u32);
+                    let result = self.reg_a / 2_i64.pow(value as u32);
                     self.reg_b = result;
                 }
 
                 OPCODE_CDV => {
                     let value = self.get_combo_operand_value(operand);
-                    let result = self.reg_a / 2_i32.pow(value as u32);
+                    let result = self.reg_a / 2_i64.pow(value as u32);
                     self.reg_c = result;
                 }
 
@@ -129,7 +129,7 @@ impl Computer {
     // Combo operand 5 represents the value of register B.
     // Combo operand 6 represents the value of register C.
     // Combo operand 7 is reserved and will not appear in valid programs.
-    fn get_combo_operand_value(&self, operand: i32) -> i32 {
+    fn get_combo_operand_value(&self, operand: i64) -> i64 {
         match operand {
             0 => 0,
             1 => 1,
@@ -149,10 +149,41 @@ pub fn day17() {
     let mut computer = Computer::from(&lines);
 
     let output = computer.run();
-    // let output = output.iter().map(|x| x.to_string()).collect_vec().join("");
-    // println!("Day17 part 1: {:?}", output);
+    let output = output.iter().map(|x| x.to_string()).collect_vec().join(",");
+    println!("Day17 part 1: {:?}", output);
 
-    println!("debug: {:?} out:{:?}", computer, output);
+    let programm = computer.program.clone();
+    let mut a = 0;
+    loop {
+        if a % 100000 == 0 {
+            println!("a: {:?}", a);
+        }
+        computer.reg_a = a;
+        computer.reg_b = 0;
+        computer.reg_c = 0;
+        computer.instruction_pointer = 0;
+        let output = computer.run();
+        if equal_vector(&output, &programm) {
+            println!("Day17 part 2: {:?}", a);
+            break;
+        }
+        a += 1;
+    }
+    // println!("debug: {:?} out:{:?}", computer, output);
 
     let result = 0;
+}
+
+fn equal_vector(a: &Vec<i64>, b: &Vec<i64>) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+
+    for i in 0..a.len() {
+        if a[i] != b[i] {
+            return false;
+        }
+    }
+
+    true
 }
