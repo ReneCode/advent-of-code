@@ -153,37 +153,73 @@ pub fn day17() {
     println!("Day17 part 1: {:?}", output);
 
     let programm = computer.program.clone();
-    let mut a = 0;
-    loop {
-        if a % 100000 == 0 {
-            println!("a: {:?}", a);
-        }
-        computer.reg_a = a;
-        computer.reg_b = 0;
-        computer.reg_c = 0;
-        computer.instruction_pointer = 0;
-        let output = computer.run();
-        if equal_vector(&output, &programm) {
-            println!("Day17 part 2: {:?}", a);
-            break;
-        }
-        a += 1;
-    }
-    // println!("debug: {:?} out:{:?}", computer, output);
 
-    let result = 0;
+    let prog_len = programm.len();
+
+    let mut factors = vec![];
+    for i in 0..computer.program.len() as u32 {
+        let mut a = 0;
+        for x in 0..i as u32 {
+            let exp: u32 = i - x;
+            let da = i64::pow(8, exp) * factors[x as usize];
+            a += da;
+        }
+        for idx in 0..8 {
+            let out = run_with_a(&mut computer, a);
+            // println!("i:{:?}/idx: {:?}:{:?} => {:?}", i, idx, programm, out);
+            if vector_with_same_end(&out, &programm) {
+                if i == computer.program.len() as u32 - 1 {
+                    println!("Day17 part 2: {:?}", a);
+                }
+                factors.push(idx);
+                break;
+            }
+            a += 1;
+        }
+    }
 }
 
-fn equal_vector(a: &Vec<i64>, b: &Vec<i64>) -> bool {
-    if a.len() != b.len() {
-        return false;
-    }
+fn vector_with_same_end(a: &Vec<i64>, b: &Vec<i64>) -> bool {
+    let a_len = a.len();
 
-    for i in 0..a.len() {
-        if a[i] != b[i] {
+    let b_len = b.len();
+    for i in 0..a_len {
+        if a[a_len - i - 1] != b[b_len - i - 1] {
             return false;
         }
     }
 
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vector_with_same_end() {
+        let a = vec![5];
+        let b = vec![1, 2, 3, 4, 5];
+        assert_eq!(vector_with_same_end(&a, &b), true);
+
+        let a = vec![1, 2, 3, 4, 5];
+        let b = vec![1, 2, 3, 4, 6];
+        assert_eq!(vector_with_same_end(&a, &b), false);
+
+        let a = vec![3, 4];
+        let b = vec![1, 2, 3, 4];
+        assert_eq!(vector_with_same_end(&a, &b), true);
+
+        let a = vec![1, 3, 4];
+        let b = vec![1, 2, 3, 4];
+        assert_eq!(vector_with_same_end(&a, &b), false);
+    }
+}
+
+fn run_with_a(computer: &mut Computer, a: i64) -> Vec<i64> {
+    computer.reg_a = a;
+    computer.reg_b = 0;
+    computer.reg_c = 0;
+    computer.instruction_pointer = 0;
+    computer.run()
 }
