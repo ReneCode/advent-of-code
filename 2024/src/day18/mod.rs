@@ -26,11 +26,27 @@ pub fn day18() {
 
     part1(&positions[0..1024]);
 
-    let result = 0;
-    println!("Day18 part 1: {:?}", result);
+    part2(&positions);
 }
 
 fn part1(positions: &[(i32, i32)]) {
+    if let Some(result) = get_way(positions) {
+        println!("Day18 part 1: {:?}", result);
+    }
+}
+
+fn part2(positions: &[(i32, i32)]) {
+    for i in 1024..positions.len() {
+        if let Some(result) = get_way(&positions[0..i]) {
+            println!("Day18 part 2: {:?}", i);
+        } else {
+            println!("Day18 part 2: {:?} => {:?}", i, positions[i - 1]);
+            break;
+        }
+    }
+}
+
+fn get_way(positions: &[(i32, i32)]) -> Option<i32> {
     let start = (0, 0);
     let mut end = (0, 0);
 
@@ -84,6 +100,9 @@ fn part1(positions: &[(i32, i32)]) {
         }
     }
 
-    let result = dist.get(&end).unwrap();
-    println!("Day18 part 1: {:?}", result);
+    if let Some(shortest_way) = dist.get(&end) {
+        Some(*shortest_way)
+    } else {
+        None
+    }
 }
