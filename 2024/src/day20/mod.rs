@@ -1,8 +1,122 @@
+use std::collections::HashMap;
+
+use itertools::Itertools;
+
 use crate::util::io;
 
-pub fn day20() {
-    let _lines = io::read_lines("./src/day20/20.data").unwrap();
+const START: char = 'S';
+const END: char = 'E';
+const WALL: char = '#';
 
-    let result = 0;
-    println!("Day20 part 1: {:?}", result);
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct Position {
+    x: i32,
+    y: i32,
+}
+
+impl Position {
+    fn new(x: i32, y: i32) -> Position {
+        Position { x, y }
+    }
+
+    fn direct_neighbours(&self) -> Vec<Position> {
+        vec![
+            Position::new(self.x - 1, self.y),
+            Position::new(self.x + 1, self.y),
+            Position::new(self.x, self.y - 1),
+            Position::new(self.x, self.y + 1),
+        ]
+    }
+}
+
+pub fn day20() {
+    let lines = io::read_lines("./src/day20/20.data").unwrap();
+
+    let mut grid: HashMap<Position, char> = HashMap::new();
+    for (y, line) in lines.iter().enumerate() {
+        for (x, c) in line.chars().enumerate() {
+            grid.insert(
+                Position {
+                    x: x as i32,
+                    y: y as i32,
+                },
+                c,
+            );
+        }
+    }
+
+    part1(&grid);
+}
+
+fn part1(grid: &HashMap<Position, char>) {
+    let start = grid.iter().find(|(_, &v)| v == START).unwrap().0;
+    let end = grid.iter().find(|(_, &v)| v == END).unwrap().0;
+
+    let mut way = vec![*start];
+    let mut current_pos = *start;
+    while current_pos != *end {
+        let neighbours = current_pos
+            .direct_neighbours()
+            .iter()
+            .filter(|pos| *pos != &current_pos)
+            .filter(|pos| !way.contains(pos))
+            .filter(|pos| {
+                if let Some(&c) = grid.get(pos) {
+                    c != WALL
+                } else {
+                    true
+                }
+            })
+            .map(|pos| *pos)
+            .collect_vec();
+
+        assert_eq!(neighbours.len(), 1);
+
+        let next_pos = neighbours.first().unwrap();
+        way.push(next_pos.clone());
+        current_pos = *next_pos;
+    }
+
+    get_all_cheats(&grid, &way);
+}
+
+fn get_all_cheats(grid: &HashMap<Position, char>, way: &[Position]) {
+    // println!("searching for cheats ....");
+
+    let mut saved_way = HashMap::new();
+    let wlen = way.len();
+
+    // try to shorten the way from each position to a "later" position
+    // by checking if there is a wall in between
+    // and the points are 2 steps horizontally or vertically apart
+    for (idx, wpos) in way.iter().enumerate() {
+        for next_idx in idx + 1..wlen {
+            if let Some(next_pos) = way.get(next_idx) {
+                let dx = next_pos.x - wpos.x;
+                let dy = next_pos.y - wpos.y;
+                if dx.abs() == 2 && dy == 0 || dx == 0 && dy.abs() == 2 {
+                    let middle_pos = Position::new(wpos.x + dx / 2, wpos.y + dy / 2);
+                    if let Some(&c) = grid.get(&middle_pos) {
+                        if c == WALL {
+                            let saved_len = next_idx - idx - 2;
+                            saved_way
+                                .entry(saved_len)
+                                .and_modify(|c| *c += 1)
+                                .or_insert(1);
+                            // println!("Cheating at {:?}", middle_pos);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mut all_count = 0;
+    for (save, count) in saved_way.iter() {
+        if *save >= 100 {
+            all_count += *count;
+        }
+    }
+
+    println!("Day20 part1:{:?}", all_count);
 }
