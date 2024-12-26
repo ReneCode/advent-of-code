@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, os::unix::process::parent_id};
 
 use itertools::Itertools;
 
@@ -46,9 +46,11 @@ pub fn day20() {
     }
 
     part1(&grid);
+
+    part2(&grid);
 }
 
-fn part1(grid: &HashMap<Position, char>) {
+fn get_way_through_grid(grid: &HashMap<Position, char>) -> Vec<Position> {
     let start = grid.iter().find(|(_, &v)| v == START).unwrap().0;
     let end = grid.iter().find(|(_, &v)| v == END).unwrap().0;
 
@@ -76,11 +78,20 @@ fn part1(grid: &HashMap<Position, char>) {
         way.push(next_pos.clone());
         current_pos = *next_pos;
     }
-
-    get_all_cheats(&grid, &way);
+    way
 }
 
-fn get_all_cheats(grid: &HashMap<Position, char>, way: &[Position]) {
+fn part1(grid: &HashMap<Position, char>) {
+    let way = get_way_through_grid(&grid);
+    get_all_cheats_part1(&grid, &way);
+}
+
+fn part2(grid: &HashMap<Position, char>) {
+    let way = get_way_through_grid(&grid);
+    get_all_cheats_part2(&grid, &way);
+}
+
+fn get_all_cheats_part1(grid: &HashMap<Position, char>, way: &[Position]) {
     // println!("searching for cheats ....");
 
     let mut saved_way = HashMap::new();
@@ -119,4 +130,45 @@ fn get_all_cheats(grid: &HashMap<Position, char>, way: &[Position]) {
     }
 
     println!("Day20 part1:{:?}", all_count);
+}
+
+fn get_all_cheats_part2(grid: &HashMap<Position, char>, way: &[Position]) {
+    // println!("searching for cheats ....");
+
+    let mut saved_way = HashMap::new();
+    let wlen = way.len();
+
+    // try to shorten the way from each position to a "later" position
+    for (idx, wpos) in way.iter().enumerate() {
+        for final_idx in idx + 2..wlen {
+            if let Some(final_pos) = way.get(final_idx) {
+                let dx = final_pos.x - wpos.x;
+                let dy = final_pos.y - wpos.y;
+
+                // let check = Position::new(3, 7);
+                // if final_pos == &check {
+                //     println!("Check");
+                // }
+
+                let cheat_len = (dx.abs() + dy.abs()) as usize;
+                if cheat_len <= 20 {
+                    let saved_len = final_idx - idx - cheat_len;
+                    saved_way
+                        .entry(saved_len)
+                        .and_modify(|c| *c += 1)
+                        .or_insert(1);
+                    // println!("Cheating at {:?} / {:?}", wpos, final_pos);
+                }
+            }
+        }
+    }
+
+    let mut all_count = 0;
+    for (save, count) in saved_way.iter() {
+        if *save >= 100 {
+            all_count += *count;
+        }
+    }
+
+    println!("Day20 part2: {:?}", all_count);
 }
