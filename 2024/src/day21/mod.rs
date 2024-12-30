@@ -52,7 +52,7 @@ impl MoveSolver {
         move_map.insert((KEY_DOWN, KEY_DOWN), vec![]);
         move_map.insert((KEY_DOWN, KEY_A), vec![KEY_RIGHT, KEY_UP]);
         move_map.insert((KEY_DOWN, KEY_LEFT), vec![KEY_LEFT]);
-        move_map.insert((KEY_DOWN, KEY_RIGHT), vec![KEY_RIGHT, KEY_UP]);
+        move_map.insert((KEY_DOWN, KEY_RIGHT), vec![KEY_RIGHT]);
 
         //// cursor keyboard
 
@@ -65,22 +65,32 @@ impl MoveSolver {
 
         move_map.insert((KEY_0, KEY_A), vec![KEY_RIGHT]);
         move_map.insert((KEY_0, KEY_2), vec![KEY_UP]);
+        move_map.insert((KEY_0, KEY_8), vec![KEY_UP, KEY_UP, KEY_UP]);
 
+        move_map.insert((KEY_1, KEY_A), vec![KEY_RIGHT, KEY_RIGHT, KEY_DOWN]);
+        move_map.insert((KEY_1, KEY_2), vec![KEY_RIGHT]);
         move_map.insert((KEY_1, KEY_7), vec![KEY_UP, KEY_UP]);
 
         move_map.insert((KEY_2, KEY_9), vec![KEY_RIGHT, KEY_UP, KEY_UP]);
 
+        move_map.insert((KEY_3, KEY_A), vec![KEY_DOWN]);
+        move_map.insert((KEY_3, KEY_4), vec![KEY_LEFT, KEY_LEFT, KEY_UP]);
         move_map.insert((KEY_3, KEY_7), vec![KEY_LEFT, KEY_LEFT, KEY_UP, KEY_UP]);
 
+        move_map.insert((KEY_4, KEY_0), vec![KEY_RIGHT, KEY_DOWN, KEY_DOWN]);
+        move_map.insert((KEY_4, KEY_1), vec![KEY_DOWN]);
         move_map.insert((KEY_4, KEY_5), vec![KEY_RIGHT]);
+        move_map.insert((KEY_4, KEY_6), vec![KEY_RIGHT, KEY_RIGHT]);
 
         move_map.insert((KEY_5, KEY_6), vec![KEY_RIGHT]);
 
         move_map.insert((KEY_6, KEY_A), vec![KEY_DOWN, KEY_DOWN]);
+        move_map.insert((KEY_6, KEY_3), vec![KEY_DOWN]);
 
         move_map.insert((KEY_7, KEY_9), vec![KEY_RIGHT, KEY_RIGHT]);
 
         move_map.insert((KEY_8, KEY_0), vec![KEY_DOWN, KEY_DOWN, KEY_DOWN]);
+        move_map.insert((KEY_8, KEY_3), vec![KEY_DOWN, KEY_DOWN, KEY_RIGHT]);
 
         move_map.insert((KEY_9, KEY_A), vec![KEY_DOWN, KEY_DOWN, KEY_DOWN]);
         move_map.insert((KEY_9, KEY_8), vec![KEY_LEFT]);
