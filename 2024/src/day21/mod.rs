@@ -1,5 +1,5 @@
 use core::num;
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap, hash::Hash, result, vec};
 
 use crate::util::io;
 
@@ -118,6 +118,8 @@ pub fn day21() {
     let lines = io::read_lines("./src/day21/21.data").unwrap();
 
     part1(&lines);
+
+    part2(&lines);
 }
 
 fn part1(lines: &Vec<String>) {
@@ -145,17 +147,55 @@ fn part1(lines: &Vec<String>) {
             }
         }
         println!();
-        let complexify = get_number(line) * all_moves.len() as i32;
+        let complexify = get_number(line) * all_moves.len() as i64;
         result += complexify;
     }
 
     println!("Day21 part 1: {:?}", result);
 }
 
-fn get_number(s: &str) -> i32 {
+fn part2(lines: &Vec<String>) {
+    let mut result = 0;
+
+    let mut numeric_solver = MoveSolver::new();
+    let mut cursor_solvers = Vec::new();
+    for _ in 0..25 {
+        cursor_solvers.push(MoveSolver::new());
+    }
+    let len_cursor_solvers = cursor_solvers.len();
+    for line in lines {
+        println!("{}: ", line);
+        let mut all_moves = "".to_string();
+
+        for c in line.chars() {
+            let mut moves = numeric_solver.get_move_to(c);
+
+            for (index, solver) in cursor_solvers.iter_mut().enumerate() {
+                let mut all_next_moves = Vec::new();
+                for m in moves {
+                    let next_moves = solver.get_move_to(m);
+                    if index == len_cursor_solvers - 1 {
+                        for end_move in next_moves.iter() {
+                            all_moves.push(*end_move);
+                        }
+                    }
+                    all_next_moves.extend(next_moves);
+                }
+                moves = all_next_moves;
+            }
+        }
+        // println!("{}", all_moves);
+        let complexify = get_number(line) * all_moves.len() as i64;
+        result += complexify;
+    }
+
+    println!("Day21 part 2: {:?}", result);
+}
+
+fn get_number(s: &str) -> i64 {
     s.chars()
         .filter(|c| c.is_digit(10))
         .collect::<String>()
-        .parse::<i32>()
+        .parse::<i64>()
         .unwrap()
 }
