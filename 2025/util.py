@@ -8,3 +8,13 @@ def read_lines(filename, strip = True):
         return lines
       lines = [l.strip() for l in lines]
       return lines
+
+
+def sign(x):
+  if x < 0:
+    return -1
+  elif x > 0:
+    return 1
+  else:
+    return 0
+  
