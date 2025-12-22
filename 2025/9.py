@@ -1,7 +1,7 @@
 # 2025 / day9
 
 
-with open("9.testdata") as f:
+with open("9.data") as f:
   lines = f.readlines()
 lines = [line.strip("\n") for line in lines]
 
@@ -12,7 +12,7 @@ points = [[int(x) for x in line.split(",")] for line in lines]
 def calc_area(idx1, idx2, points):
   p1 = points[idx1]
   p2 = points[idx2]
-  area = abs(p1[0] - p2[0]+1) * abs(p1[1] - p2[1]+1)
+  area = (abs(p1[0] - p2[0]) + 1) * (abs(p1[1] - p2[1]) + 1)
   return area
 
 def part1():
@@ -63,14 +63,9 @@ def is_point_in_range(r1, r2, p1, p2):
   else:
     return True
 
-def is_valid_area(idx1, idx2, points):
-  p1 = points[idx1]
-  p2 = points[idx2]
-  min_x = min(p1[0], p2[0])
-  max_x = max(p1[0], p2[0])
-  min_y = min(p1[1], p2[1])
-  max_y = max(p1[1], p2[1])
-
+def get_horizontal_and_vertical_lines(points):
+  horizontal_lines = []
+  vertical_lines = []
   count_points = len(points)
   for i in range(count_points):
     p1 = points[i]
@@ -79,38 +74,120 @@ def is_valid_area(idx1, idx2, points):
       j = 0
       
     p2 = points[j]
-    horizontal = p1[1] == p2[1]
-    vertical = p1[0] == p2[0]
-    if horizontal: 
-      # is line inside area? on the y axis
-      if min_y < p1[1] < max_y:
-        if is_point_in_range(min_x, max_x, p1[0], p2[0]):
-        # if (min_x < p1[0] < max_x) or (min_x < p2[0] < max_x):
-            return False
-    elif vertical:
-      if min_x < p1[0] < max_x:
-        if is_point_in_range(min_y, max_y, p1[1], p2[1]):
-        # if (min_y < p1[1] < max_y) or (min_y < p2[1] < max_y):
-            return False
-    else:
+    horizontal = p1[1] == p2[1]   # y-axis same
+    vertical = p1[0] == p2[0]     # x-axis same
+
+    if not (horizontal or vertical):
       raise Exception("Non axis-aligned line detected")
 
+    if horizontal:
+      y = p1[1]
+      horizontal_lines.append((min(p1[0], p2[0]), max(p1[0], p2[0]), y))
+    elif vertical:
+      x = p1[0]
+      vertical_lines.append((min(p1[1], p2[1]), max(p1[1], p2[1]),x))
+    else:
+      raise Exception("Non axis-aligned line detected")
+    
+  # sort horizontal lines by the y value
+  # x1, x2, y
+  horizontal_lines.sort(key=lambda line: line[2])
+
+  # sort vertical lines by the x value
+  # y1, y2, x
+  vertical_lines.sort(key=lambda line: line[2])
+
+  return (horizontal_lines, vertical_lines)
+
+
+
+def get_check_points(p1, p2):
+  min_x = min(p1[0], p2[0])
+  max_x = max(p1[0], p2[0])
+  min_y = min(p1[1], p2[1])
+  max_y = max(p1[1], p2[1])
+
+  # one pixel inside area
+  check_points = [
+    (min_x + 1, min_y + 1),   # top left
+    (max_x - 1, min_y + 1),   # top right
+    (min_x + 1, max_y - 1),   # bottom left
+    (max_x - 1, max_y - 1),   # bottom right
+  ]
+  return check_points
+
+def test_get_check_points():
+  p1 = (14, 11)
+  p2 = (7, 8)
+  check_points = get_check_points(p1, p2)
+  assert check_points == [
+    (8,9), (13,9),
+    (8,10), (13,10)
+  ]
+
+
+def check_area_inside_polygon(idx1, idx2, points, horizontal_lines, vertical_lines):
+  check_points = get_check_points(points[idx1], points[idx2])
+
+  counts = []
+  for check_point in check_points:
+    x = check_point[0]
+    y = check_point[1]
+
+    count = 0
+    # Cast ray rightwards (increasing x)
+    for (y1, y2, line_x) in vertical_lines:
+      if x < line_x:
+        if y1 < y < y2:
+          count += 1
+    counts.append(count)
+    if count % 2 == 0:
+      return False
+  if counts[0] != counts[1] or counts[2] != counts[3]:
+    # inconsistent counts on top left and top right 
+    # or bottom left and bottom right
+    return False
+
+  counts = []
+  for check_point in check_points:  # bottom left and bottom right
+    x = check_point[0]
+    y = check_point[1]
+    count = 0
+    # Cast ray downwards (increasing y)
+    for (x1, x2, line_y) in horizontal_lines:
+      if y < line_y:
+        if x1 < x < x2:
+          count += 1
+    counts.append(count)
+    if count % 2 == 0:
+      return False
+  if counts[0] != counts[2] or counts[1] != counts[3]:
+    # inconsistent counts on top left and bottom left 
+    # or top right and bottom right
+    return False
+  
+  # all checks passed
   return True
+
 
 
 def part2():
   max_area = 0
+  idx1 = 0
+  idx2= 0
+  doit= False
+  (horizontal_lines, vertical_lines) = get_horizontal_and_vertical_lines(points)
   for i in range(len(points)):
     for j in range(i + 1, len(points)):
       area = calc_area(i, j, points)
-      if area >= max_area:
-        print("Checking area between points", points[i], points[j])
-        if is_valid_area(i, j, points):
+      if area > max_area:
+
+        if check_area_inside_polygon(i, j, points, horizontal_lines, vertical_lines):
           print("  Valid", area)
           max_area = area
-        else:
-          print("  Invalid")
+          continue
   print("Part2, Max area:", max_area)
+
 
 # part1()
 part2()
